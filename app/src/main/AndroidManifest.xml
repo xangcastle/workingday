@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.valuarte.dtracking" >
+
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.RECEIVE_SMS" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.SEND_SMS" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+
+	
+	
+	
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:theme="@style/Theme.Main" >
+        <receiver android:name="com.valuarte.dtracking.Util.SincronizadorBackground" >
+        </receiver>
+        <receiver android:name="com.valuarte.dtracking.Util.ReceiverBoot" >
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
+        <activity
+            android:name="com.valuarte.dtracking.MainActivity"
+            android:label="@string/title_activity" >
+        </activity>
+        <activity
+            android:name="com.valuarte.dtracking.FormularioActivity"
+            android:label="@string/title_activity" >
+        </activity>
+
+        <receiver android:name="com.valuarte.dtracking.MensajeTextos.SmsListener" >
+            <intent-filter>
+                <action android:name="android.provider.Telephony.SMS_RECEIVED" />
+            </intent-filter>
+        </receiver>
+        <receiver android:name="com.valuarte.dtracking.Util.SincronizadorPosicionActual" />
+        <receiver android:name="com.valuarte.dtracking.Util.SincronizadorGestionesEliminadas" />
+
+        <activity
+            android:name="com.valuarte.dtracking.Login"
+            android:label="@string/title_activity" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name="com.valuarte.dtracking.Gestiones"
+            android:label="@string/title_activity" >
+        </activity>
+        <activity
+            android:name="com.valuarte.dtracking.Historial"
+            android:label="@string/title_activity_historial" >
+        </activity>
+        <activity
+            android:name="com.valuarte.dtracking.Scanner.BarcodeScanner"
+            android:label="@string/title_activity_barcode_scanner" >
+        </activity>
+        <activity
+            android:name="com.valuarte.dtracking.Mensajes"
+            android:label="@string/title_activity_mensajes" >
+        </activity>
+    </application>
+
+</manifest>

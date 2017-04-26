@@ -1,0 +1,19 @@
+<resources>
+    <!-- Default screen margins, per the Android Design guidelines. -->
+    <dimen name="list_item_article_thumbnail">48dp</dimen>
+    <dimen name="list_item_artile_vertical_margin">4dp</dimen>
+    <dimen name="list_item_article_space">8dp</dimen>
+
+    <dimen name="detail_backdrop_height">200dp</dimen>
+    <dimen name="card_margin">16dp</dimen>
+    <dimen name="fab_margin">16dp</dimen>
+    <dimen name="regular_offset">16dp</dimen>
+    <!-- Default screen margins, per the Android Design guidelines. -->
+    <dimen name="activity_horizontal_margin">16dp</dimen>
+    <dimen name="activity_vertical_margin">16dp</dimen>
+    <dimen name="dialog_body">20dp</dimen>
+    <dimen name="padding_between">20dp</dimen>
+    <dimen name="button_padding">8dp</dimen>
+    <dimen name="normal_padding">24dp</dimen>
+    <dimen name="edit_text_padding">8dp</dimen>
+</resources>
