@@ -33,7 +33,7 @@ public class SincronizacionGestionWeb implements SincronizacionImagenes.Listener
     /**
      * Ruta a la que se va hacer la sincronización
      */
-    public static final String URL = "http://www.deltacopiers.com/dtracking/movil/cargar_gestion/";
+    public static final String URL = "http://192.168.0.38:8000/dtracking/movil/cargar_gestion/";
     /**
      * Contexto de la aplicacion
      */
@@ -133,7 +133,7 @@ public class SincronizacionGestionWeb implements SincronizacionImagenes.Listener
                 params.put("gestion", Integer.toString(gestion.getIdgestion()));
                 params.put("latitude", Double.toString(gestion.getLatitud()));
                 params.put("longitude", Double.toString(gestion.getLongitud()));
-                params.put("fecha", gestion.getFecha());
+                params.put("fecha", gestion.getFechaDDMMAA());
                 try {
                     String json= jsonObject.getJSONObject("campos").toString();
                     json=json.replace("\"","&");

@@ -212,7 +212,6 @@ public class RecursosBaseDatos implements Serializable {
      * @return el id del tipo de gestion
      */
     public int guardarTipoGestion(TipoGestion tipoGestion) {
-
         int id = -1;
         try {
             String[] params = {Integer.toString(tipoGestion.getId())};
@@ -311,7 +310,7 @@ public class RecursosBaseDatos implements Serializable {
     public ArrayList<Gestion> getGestionesDesdeTipoGestiones(Formulario formulario) {
         Gestion.ColumnasTablaSql clm = new Gestion.ColumnasTablaSql();
         String consulta = "select * from " + clm.TABLENAME + " where " + clm.TIPOGESTION + "=? AND " + clm.ESBORRADOR + " =?";
-        String[] params = {Integer.toString(formulario.getIdFormulario()), "0"};
+        String[] params = {Integer.toString(formulario.getIdFormulario()), "1"};
         Cursor c = database.rawQuery(consulta, params);
         ArrayList<Gestion> gestions = new ArrayList<>();
         Gestion gestion;

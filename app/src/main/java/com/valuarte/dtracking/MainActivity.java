@@ -240,7 +240,7 @@ public class MainActivity extends BaseActivity implements AdapterTipoGestiones.L
      * Consulta los formularios en la base de datos
      */
     private void consultarFormularios() {
-        String url = "http://34.201.6.95/dtracking/movil/tipos_gestion/";
+        String url = "http://192.168.0.38:8000/dtracking/movil/tipos_gestion/";
         JsonArrayRequest jsonArrayRequest = new JsonArrayRequest(Request.Method.POST, url, "", new Response.Listener<JSONArray>() {
             /**
              * Called when a response is received.
@@ -269,7 +269,7 @@ public class MainActivity extends BaseActivity implements AdapterTipoGestiones.L
      * @param response arreglo de json que contiene la informacion para construir los formularios
      */
     public void consultarGestiones(final JSONArray response) {
-        String url = "http://34.201.6.95/dtracking/movil/gestiones/";
+        String url = "http://192.168.0.38:8000/dtracking/movil/gestiones/";
         /**
          * solicitud post al servidor
          */

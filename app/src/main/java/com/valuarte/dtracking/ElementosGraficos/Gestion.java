@@ -5,7 +5,10 @@ import android.content.ContentValues;
 import com.valuarte.dtracking.BaseDatos.RecursosBaseDatos;
 
 import java.io.Serializable;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
 
 /**
  * Representa una gestion
@@ -141,11 +144,13 @@ public class Gestion implements Serializable{
     public static String generarFechaDesdeCalendar(Calendar calendar)
     {
         String fecha="";
-        if(calendar!=null)
+        Date date = calendar.getTime();
+        fecha=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(date);
+        /*if(calendar!=null)
         {
             fecha=calendar.get(Calendar.YEAR)+"-"+(calendar.get(Calendar.MONTH)+1)+"-"+calendar.get(Calendar.DAY_OF_MONTH)
                     +" "+calendar.get(Calendar.HOUR_OF_DAY)+":"+calendar.get(Calendar.MINUTE)+":"+calendar.get(Calendar.SECOND);
-        }
+        }*/
         return fecha;
     }
     /**
@@ -313,6 +318,16 @@ public class Gestion implements Serializable{
      */
     public String getFecha() {
         return fecha;
+    }
+    public String getFechaDDMMAA() {
+        try {
+            Date date=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(fecha);
+            return new SimpleDateFormat("yyyy-MM-dd").format(date);
+        } catch (ParseException e) {
+            e.printStackTrace();
+            return fecha;
+        }
+
     }
 
     public void setFecha(String fecha) {

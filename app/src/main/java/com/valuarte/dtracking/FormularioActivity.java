@@ -60,6 +60,7 @@ import com.valuarte.dtracking.MensajeTextos.MensajeEntregadoIntent;
 import com.valuarte.dtracking.MensajeTextos.MensajeEnviadoIntent;
 import com.valuarte.dtracking.Util.ConexionAInternet;
 import com.valuarte.dtracking.Util.EncodingJSON;
+import com.valuarte.dtracking.Util.ReceiverManager;
 import com.valuarte.dtracking.Util.SincronizacionGestionSMS;
 import com.valuarte.dtracking.Util.SincronizacionGestionWeb;
 import com.valuarte.dtracking.Util.Usuario;
@@ -218,6 +219,8 @@ public class FormularioActivity extends AppCompatActivity implements Imagen.List
      */
     private double longitudActual;
 
+    ReceiverManager registerReceiver;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         try {
@@ -227,12 +230,7 @@ public class FormularioActivity extends AppCompatActivity implements Imagen.List
             setupToolbar();
             locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
             locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 1.0f, this);
-            if (mensajeEnviadoIntent == null && mensajeEntregadoIntent == null) {
-                mensajeEnviadoIntent = new MensajeEnviadoIntent(FormularioActivity.this);
-                mensajeEntregadoIntent = new MensajeEntregadoIntent(null);
-                registerReceiver(mensajeEnviadoIntent, new IntentFilter(SENT));
-                registerReceiver(mensajeEntregadoIntent, new IntentFilter(DELIVERED));
-            }
+
             recursosBaseDatos = new RecursosBaseDatos(this);
             conexionAInternet = new ConexionAInternet();
             usuario = recursosBaseDatos.getUsuario();
@@ -266,6 +264,24 @@ public class FormularioActivity extends AppCompatActivity implements Imagen.List
 
     public void onResume() {
         super.onResume();
+        if(registerReceiver==null)
+            registerReceiver = new ReceiverManager(this);
+
+        if (mensajeEnviadoIntent == null && mensajeEntregadoIntent == null) {
+            mensajeEnviadoIntent = new MensajeEnviadoIntent(FormularioActivity.this);
+            mensajeEntregadoIntent = new MensajeEntregadoIntent(null);
+        }else if(mensajeEnviadoIntent == null && mensajeEntregadoIntent != null) {
+            mensajeEnviadoIntent = new MensajeEnviadoIntent(FormularioActivity.this);
+        }else {
+            mensajeEntregadoIntent = new MensajeEntregadoIntent(null);
+        }
+
+        if (!registerReceiver.isReceiverRegistered(mensajeEnviadoIntent)) {
+            registerReceiver.unregisterReceiver(mensajeEnviadoIntent);
+        }
+        if (!registerReceiver.isReceiverRegistered(mensajeEntregadoIntent)) {
+            registerReceiver.unregisterReceiver(mensajeEntregadoIntent);
+        }
         //  Log.e("REGISTRANDO","REGISTRANDO");
         /**     mensajeEnviadoIntent = new MensajeEnviadoIntent(FormularioActivity.this);
          mensajeEntregadoIntent = new MensajeEntregadoIntent(null);
@@ -277,8 +293,13 @@ public class FormularioActivity extends AppCompatActivity implements Imagen.List
     public void onPause() {
         super.onPause();
         //   Log.e("QUITANDO ", "QUITANDO");
-        // unregisterReceiver(mensajeEnviadoIntent);
-        //    unregisterReceiver(mensajeEntregadoIntent);
+        if (!registerReceiver.isReceiverRegistered(mensajeEnviadoIntent)) {
+            registerReceiver.unregisterReceiver(mensajeEnviadoIntent);
+        }
+        if (!registerReceiver.isReceiverRegistered(mensajeEntregadoIntent)) {
+            registerReceiver.unregisterReceiver(mensajeEntregadoIntent);
+        }
+
     }
 
 
@@ -403,7 +424,7 @@ public class FormularioActivity extends AppCompatActivity implements Imagen.List
                     sincronizarViaIntenet(jsonObject);
                 } else {
                     if (sePuedeSincronizarPorEsteMedio(conexiones[1])) {
-                        sincronizarViaSMS(jsonObject);
+                        sincronizarViaIntenet(jsonObject);
                     } else {
                         construirErrorPorRed();
                     }
