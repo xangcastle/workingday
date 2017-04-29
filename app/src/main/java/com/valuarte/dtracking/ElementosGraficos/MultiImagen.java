@@ -1,10 +1,18 @@
 package com.valuarte.dtracking.ElementosGraficos;
 
+import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.net.Uri;
+import android.os.Environment;
+import android.provider.MediaStore;
 import android.support.design.widget.FloatingActionButton;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.ImageView;
@@ -14,9 +22,13 @@ import android.widget.TextView;
 import com.valuarte.dtracking.BaseDatos.RecursosBaseDatos;
 import com.valuarte.dtracking.Excepciones.NoSoportaValorException;
 import com.valuarte.dtracking.Excepciones.ValorRequeridoException;
+import com.valuarte.dtracking.FormularioActivity;
 import com.valuarte.dtracking.R;
 
 import java.io.File;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
 
 /**
  * Representa un campo de imagen en el formulario
@@ -40,6 +52,8 @@ public class MultiImagen extends Vista {
      * nombre de la variable
      */
     private String nombreVariable;
+
+
     public MultiImagen() {
 
     }
@@ -69,7 +83,24 @@ public class MultiImagen extends Vista {
      * @return View  campo del formulario
      */
     @Override
-    public View construirVista(Context context) {
+    public View construirVista(final Context context) {
+        listener = (ListenerBotonImagen) context;
+        LayoutInflater inflater = LayoutInflater.from(context);
+        View inflatedLayout= inflater.inflate(R.layout.multi_foto_layout, null, false);
+        FloatingActionButton fab=(FloatingActionButton) inflatedLayout.findViewById(R.id.agregarImagen);
+        TextView txtTitulo=(TextView) inflatedLayout.findViewById(R.id.titulo);
+        LinearLayout layoutImagnes=(LinearLayout) inflatedLayout.findViewById(R.id.LayoutImagnes);
+        layoutImagnes.setId(idPantalla);
+
+        txtTitulo.setText(titulo);
+        fab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                listener.onClickMultiImageSeleccionado(idPantalla);
+            }
+        });
+        return inflatedLayout;
+        /*
 
         LinearLayout linearLayout = new LinearLayout(context);
         linearLayout.setOrientation(LinearLayout.VERTICAL);
@@ -103,7 +134,26 @@ public class MultiImagen extends Vista {
                 }
         }
         linearLayout.addView(floatingActionButton, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT));
-        return linearLayout;
+        return linearLayout;*/
+    }
+    private void galeriaIntent(Context context) {
+        Intent intent = new Intent();
+        intent.setType("image/*");
+        intent.setAction(Intent.ACTION_GET_CONTENT);
+        ((Activity)context).startActivityForResult(
+                Intent.createChooser(intent, "Seleccione Imagen"),
+                FormularioActivity.GALERIA);
+    }
+
+    private void camaraIntenet(Context context) {
+        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        Date date = new Date();
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(date);
+        File imageFolder = new File(Environment.getExternalStorageDirectory(), "Imagenes TcGlobal Banca 2");
+        File f = new File(imageFolder + File.separator + "image-tcglobal" + timeStamp + ".jpg");
+        intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(f));
+        ((Activity)context).startActivityForResult(intent,
+                FormularioActivity.CAMARA);
     }
 
     /**
@@ -270,7 +320,7 @@ public class MultiImagen extends Vista {
          *
          * @param idPantalla
          */
-        void onClickSeleccionado(int idPantalla);
+        void onClickMultiImageSeleccionado(int idPantalla);
     }
 
 }

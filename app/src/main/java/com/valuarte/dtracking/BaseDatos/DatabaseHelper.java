@@ -13,6 +13,7 @@ import com.valuarte.dtracking.ElementosGraficos.Formulario;
 import com.valuarte.dtracking.ElementosGraficos.Gestion;
 import com.valuarte.dtracking.ElementosGraficos.Imagen;
 import com.valuarte.dtracking.ElementosGraficos.Input;
+import com.valuarte.dtracking.ElementosGraficos.MultiImagen;
 import com.valuarte.dtracking.ElementosGraficos.RadioBoton;
 import com.valuarte.dtracking.ElementosGraficos.RadioGrupo;
 import com.valuarte.dtracking.ElementosGraficos.TextArea;
@@ -50,6 +51,7 @@ public class DatabaseHelper extends SQLiteOpenHelper implements Serializable{
         sqLiteDatabase.execSQL(new RadioBoton().crearTablaSqlite());
         sqLiteDatabase.execSQL(new ComboCaja().crearTablaSqlite());
         sqLiteDatabase.execSQL(new Imagen().crearTablaSqlite());
+        sqLiteDatabase.execSQL(new MultiImagen().crearTablaSqlite());
         sqLiteDatabase.execSQL(new FirmaDigital().crearTablaSqlite());
         sqLiteDatabase.execSQL(Usuario.construirTablaSqlite());
         sqLiteDatabase.execSQL(ElementoCombo.crearTablaSqlite());

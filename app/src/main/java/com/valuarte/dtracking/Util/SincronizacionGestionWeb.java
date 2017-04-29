@@ -33,7 +33,7 @@ public class SincronizacionGestionWeb implements SincronizacionImagenes.Listener
     /**
      * Ruta a la que se va hacer la sincronización
      */
-    public static final String URL = "http://192.168.0.38:8000/dtracking/movil/cargar_gestion/";
+    public static final String URL = "http://192.168.1.17:8000/dtracking/movil/cargar_gestion/";
     /**
      * Contexto de la aplicacion
      */

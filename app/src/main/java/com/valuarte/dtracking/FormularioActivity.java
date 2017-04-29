@@ -32,6 +32,7 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.AttributeSet;
+import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
@@ -50,6 +51,7 @@ import com.valuarte.dtracking.ElementosGraficos.FirmaDigital;
 import com.valuarte.dtracking.ElementosGraficos.Formulario;
 import com.valuarte.dtracking.ElementosGraficos.Gestion;
 import com.valuarte.dtracking.ElementosGraficos.Imagen;
+import com.valuarte.dtracking.ElementosGraficos.MultiImagen;
 import com.valuarte.dtracking.ElementosGraficos.RadioBoton;
 import com.valuarte.dtracking.ElementosGraficos.RadioGrupo;
 import com.valuarte.dtracking.ElementosGraficos.TipoGestion;
@@ -65,6 +67,7 @@ import com.valuarte.dtracking.Util.SincronizacionGestionSMS;
 import com.valuarte.dtracking.Util.SincronizacionGestionWeb;
 import com.valuarte.dtracking.Util.Usuario;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -87,6 +90,7 @@ import butterknife.ButterKnife;
  * @version 1.0
  */
 public class FormularioActivity extends AppCompatActivity implements Imagen.ListenerBotonImagen,
+        MultiImagen.ListenerBotonImagen,
         FirmaDigital.EventoBotonFirma, MensajeEnviadoIntent.ListenerMensajeEnviado,
         SincronizacionGestionWeb.ListenerSincronizacionWeb, LocationListener {
     public static final int CAMARA = 100;
@@ -103,6 +107,10 @@ public class FormularioActivity extends AppCompatActivity implements Imagen.List
      * Las rutas de las imagenes del formulario
      */
     private HashMap<Integer, String> rutas;
+    /**
+     * Las rutas de las imagenes del formulario
+     */
+    private HashMap<Integer, String> rutasMulti;
     /**
      * Identificador en la pantalla de image view para una firma
      */
@@ -241,6 +249,8 @@ public class FormularioActivity extends AppCompatActivity implements Imagen.List
 
             rutas = new HashMap<>();
             rutasFirmas = new HashMap<>();
+            rutasMulti=new HashMap<>();
+
             Intent intent = getIntent();
             gestion = (Gestion) intent.getSerializableExtra("gestion");
             tipoGestion = (TipoGestion) intent.getSerializableExtra("tipoGestion");
@@ -254,6 +264,7 @@ public class FormularioActivity extends AppCompatActivity implements Imagen.List
             linearLayout.addView(crearPieDeFormulario(), new LinearLayout.LayoutParams(LinearLayout.LayoutParams.FILL_PARENT,
                     LinearLayout.LayoutParams.FILL_PARENT));
             if (savedInstanceState != null) {
+                rutasMulti = (HashMap<Integer, String>) savedInstanceState.getSerializable("rutasImagenesMulti");
                 rutas = (HashMap<Integer, String>) savedInstanceState.getSerializable("rutasImagenes");
                 rutasFirmas = (HashMap<Integer, String>) savedInstanceState.getSerializable("rutasFirmas");
                 cargarImagenes();
@@ -577,6 +588,16 @@ public class FormularioActivity extends AppCompatActivity implements Imagen.List
                 }
             }
         }
+        keys = rutasMulti.keySet();
+        for (int id : keys) {
+            for (Contenedor c : formulario.getContenedores()) {
+                for (Vista v : c.getVistas()) {
+                    if (v.getIdPantalla() == id) {
+                        ((MultiImagen) v).setValor(rutasMulti.get(id));
+                    }
+                }
+            }
+        }
         keys = rutasFirmas.keySet();
         for (int id : keys) {
             for (Contenedor c : formulario.getContenedores()) {
@@ -612,6 +633,30 @@ public class FormularioActivity extends AppCompatActivity implements Imagen.List
         }
     }
 
+    @Override
+    public void onClickMultiImageSeleccionado(int idPantalla) {
+        this.idImage = idPantalla;
+
+        final CharSequence[] items = {"Tomar Foto", "Seleccionar desde galeria",
+                "Cancelar"};
+        AlertDialog.Builder builder = new AlertDialog.Builder(FormularioActivity.this);
+        builder.setTitle("Agregar Foto");
+        builder.setIcon(R.drawable.ic_camera);
+        builder.setItems(items, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int item) {
+                if (items[item].equals("Tomar Foto")) {
+                    camaraIntenet();
+                } else if (items[item].equals("Seleccionar desde galeria")) {
+                    galeriaIntent();
+
+                } else if (items[item].equals("Cancelar")) {
+                    dialog.dismiss();
+                }
+            }
+        });
+        builder.show();
+    }
 
     @Override
     public void onClickSeleccionado(int idPantalla) {
@@ -654,7 +699,6 @@ public class FormularioActivity extends AppCompatActivity implements Imagen.List
      */
     private void camaraIntenet() {
         Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-
         Date date = new Date();
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(date);
         f = new File(imageFolder + File.separator + "image-tcglobal" + timeStamp + ".jpg");
@@ -695,6 +739,29 @@ public class FormularioActivity extends AppCompatActivity implements Imagen.List
                 imageView.setImageBitmap(Bitmap.createScaledBitmap(bitmap, ((WindowManager) getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay().getWidth(), ((WindowManager) getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay().getHeight() / 3, false));
             }
         }
+        keys = rutasMulti.keySet();
+        LinearLayout layoutImagenes;
+        for (int id : keys) {
+            layoutImagenes=(LinearLayout) findViewById(id);
+            LayoutInflater inflater = LayoutInflater.from(this);
+
+            try {
+                JSONArray arrayImagenes=new JSONArray(rutasMulti.get(id));
+                for(int i=0; i<arrayImagenes.length();i++){
+                    View ImageLayout= inflater.inflate(R.layout.item_image_grid, null, false);
+                    ImageView image=(ImageView) ImageLayout.findViewById(R.id.image);
+
+                    Bitmap bitmap = BitmapFactory.decodeFile(arrayImagenes.getString(i));
+                    if (bitmap != null) {
+                        image.setImageBitmap(Bitmap.createScaledBitmap(bitmap,200,200,false));
+                    }
+                    layoutImagenes.addView(ImageLayout);
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+
         keys = rutasFirmas.keySet();
         for (int id : keys) {
             imageView = (ImageView) findViewById(id);
@@ -715,21 +782,55 @@ public class FormularioActivity extends AppCompatActivity implements Imagen.List
         try {
             Bitmap thumbnail = BitmapFactory.decodeFile(f.getAbsolutePath());
             if (thumbnail != null) {
-                ImageView imageView = (ImageView) findViewById(idImage);
-                imageView.setImageBitmap(Bitmap.createScaledBitmap(thumbnail, imageView.getWidth(), imageView.getHeight(), false));
-                ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-                thumbnail.compress(Bitmap.CompressFormat.JPEG, 50, bytes);
-                Date date = new Date();
-                String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(date);
-                File destination = new File(imageFolder + File.separator + "image-tcglobal" + timeStamp + ".jpg");
-                rutas.put(idImage, destination.getAbsolutePath());
-                FileOutputStream fo;
+                if(findViewById(idImage) instanceof ImageView){
+                    ImageView imageView = (ImageView) findViewById(idImage);
+                    imageView.setImageBitmap(Bitmap.createScaledBitmap(thumbnail, imageView.getWidth(), imageView.getHeight(), false));
+                    ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+                    thumbnail.compress(Bitmap.CompressFormat.JPEG, 50, bytes);
+                    Date date = new Date();
+                    String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(date);
+                    File destination = new File(imageFolder + File.separator + "image-tcglobal" + timeStamp + ".jpg");
+                    rutas.put(idImage, destination.getAbsolutePath());
+                    FileOutputStream fo;
 
-                destination.createNewFile();
-                fo = new FileOutputStream(destination);
-                fo.write(bytes.toByteArray());
-                fo.close();
-                f.delete();
+                    destination.createNewFile();
+                    fo = new FileOutputStream(destination);
+                    fo.write(bytes.toByteArray());
+                    fo.close();
+                    f.delete();
+                }else {
+                    LinearLayout layoutImagenes=(LinearLayout) findViewById(idImage);
+                    LayoutInflater inflater = LayoutInflater.from(this);
+                    View ImageLayout= inflater.inflate(R.layout.item_image_grid, null, false);
+
+                    ImageView image=(ImageView) ImageLayout.findViewById(R.id.image);
+                    image.setImageBitmap(Bitmap.createScaledBitmap(thumbnail, 200, 200, false));
+
+
+                    ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+                    thumbnail.compress(Bitmap.CompressFormat.JPEG, 50, bytes);
+                    Date date = new Date();
+                    String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(date);
+                    File destination = new File(imageFolder + File.separator + "image-tcglobal" + timeStamp + ".jpg");
+
+                    String Imagenes = rutasMulti.get(idImage);
+                    JSONArray arregloImagenes = new JSONArray();
+                    if(Imagenes!=null)
+                        arregloImagenes= new JSONArray(Imagenes);
+
+                    arregloImagenes.put(destination.getAbsolutePath());
+
+                    rutasMulti.put(idImage, arregloImagenes.toString());
+                    FileOutputStream fo;
+
+                    destination.createNewFile();
+                    fo = new FileOutputStream(destination);
+                    fo.write(bytes.toByteArray());
+                    fo.close();
+                    f.delete();
+
+                    layoutImagenes.addView(ImageLayout);
+                }
             }
         } catch (FileNotFoundException e) {
             Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
@@ -812,6 +913,7 @@ public class FormularioActivity extends AppCompatActivity implements Imagen.List
     @Override
     public void onSaveInstanceState(Bundle savedInstanceState) {
         savedInstanceState.putSerializable("rutasImagenes", rutas);
+        savedInstanceState.putSerializable("rutasImagenesMulti", rutasMulti);
         savedInstanceState.putSerializable("rutasFirmas", rutasFirmas);
         super.onSaveInstanceState(savedInstanceState);
     }
@@ -1103,6 +1205,8 @@ public class FormularioActivity extends AppCompatActivity implements Imagen.List
         Toast.makeText(this,"Por favor habilite el GPS",Toast.LENGTH_LONG).show();
 
     }
+
+
 
     /**
      * Clase que maneja el dibujado de la firma

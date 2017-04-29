@@ -29,4 +29,5 @@ dependencies {
     compile 'com.jakewharton:butterknife:7.0.1'
     compile 'me.dm7.barcodescanner:zbar:1.8.2'
 
+    compile 'com.android.support.constraint:constraint-layout:1.0.2'
 }

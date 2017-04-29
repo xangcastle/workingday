@@ -17,6 +17,7 @@ import com.valuarte.dtracking.ElementosGraficos.Formulario;
 import com.valuarte.dtracking.ElementosGraficos.Gestion;
 import com.valuarte.dtracking.ElementosGraficos.Imagen;
 import com.valuarte.dtracking.ElementosGraficos.Input;
+import com.valuarte.dtracking.ElementosGraficos.MultiImagen;
 import com.valuarte.dtracking.ElementosGraficos.RadioBoton;
 import com.valuarte.dtracking.ElementosGraficos.RadioGrupo;
 import com.valuarte.dtracking.ElementosGraficos.TextArea;
@@ -310,7 +311,7 @@ public class RecursosBaseDatos implements Serializable {
     public ArrayList<Gestion> getGestionesDesdeTipoGestiones(Formulario formulario) {
         Gestion.ColumnasTablaSql clm = new Gestion.ColumnasTablaSql();
         String consulta = "select * from " + clm.TABLENAME + " where " + clm.TIPOGESTION + "=? AND " + clm.ESBORRADOR + " =?";
-        String[] params = {Integer.toString(formulario.getIdFormulario()), "1"};
+        String[] params = {Integer.toString(formulario.getIdFormulario()), "0"};
         Cursor c = database.rawQuery(consulta, params);
         ArrayList<Gestion> gestions = new ArrayList<>();
         Gestion gestion;
@@ -607,6 +608,7 @@ public class RecursosBaseDatos implements Serializable {
                 contenedor.agregarVistas(getCombosDesdeContenedor(c.getInt(indiceId)));
                 contenedor.agregarVistas(getCheckCajasDesdeContenedor(c.getInt(indiceId)));
                 contenedor.agregarVistas(getImagenesDesdeContenedor(c.getInt(indiceId)));
+                contenedor.agregarVistas(getMultiImagenesDesdeContenedor(c.getInt(indiceId)));
                 contenedor.agregarVistas(getFirmasDigitalesDesdeContenedor(c.getInt(indiceId)));
                 Collections.sort(contenedor.getVistas());
                 contenedors.add(contenedor);
@@ -939,6 +941,36 @@ public class RecursosBaseDatos implements Serializable {
             int indiceValor = c.getColumnIndex(clm.VALOR);
             do {
                 imagen = new Imagen(c.getInt(indiceId), c.getInt(indiceAncho), c.getInt(indiceAlto),
+                        c.getInt(indicePantalla), c.getInt(indiceLayout), c.getInt(indiceRequerido) > 0,
+                        c.getInt(indiceHabilitado) > 0, c.getString(indiceValor), c.getString(indiceTitulo), c.getString(indiceNombreVariable));
+                imagenes.add(imagen);
+            } while (c.moveToNext());
+        }
+        c.close();
+        return imagenes;
+    }
+
+    public ArrayList<Vista> getMultiImagenesDesdeContenedor(int idContenedor) {
+        ArrayList<Vista> imagenes = new ArrayList<>();
+        MultiImagen.ColumnasTablaSql clm = new MultiImagen.ColumnasTablaSql();
+        String consulta = "select * from " + clm.TABLE_NAME + " where " + clm.LAYOUT + "=?";
+        String[] params = {Integer.toString(idContenedor)};
+        Cursor c = database.rawQuery(consulta, params);
+        c.moveToFirst();
+        MultiImagen imagen;
+        if (c.getCount() > 0) {
+            int indiceId = c.getColumnIndex(clm.ID);
+            int indiceAncho = c.getColumnIndex(clm.ANCHO);
+            int indiceAlto = c.getColumnIndex(clm.ALTO);
+            int indiceHabilitado = c.getColumnIndex(clm.HABILITADO);
+            int indiceLayout = c.getColumnIndex(clm.LAYOUT);
+            int indicePantalla = c.getColumnIndex(clm.PANTALLA);
+            int indiceRequerido = c.getColumnIndex(clm.REQUERIDO);
+            int indiceTitulo = c.getColumnIndex(clm.TITULO);
+            int indiceNombreVariable = c.getColumnIndex(clm.NOMBRE_VARIABLE);
+            int indiceValor = c.getColumnIndex(clm.VALOR);
+            do {
+                imagen = new MultiImagen(c.getInt(indiceId), c.getInt(indiceAncho), c.getInt(indiceAlto),
                         c.getInt(indicePantalla), c.getInt(indiceLayout), c.getInt(indiceRequerido) > 0,
                         c.getInt(indiceHabilitado) > 0, c.getString(indiceValor), c.getString(indiceTitulo), c.getString(indiceNombreVariable));
                 imagenes.add(imagen);

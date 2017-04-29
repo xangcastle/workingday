@@ -185,6 +185,13 @@ public class Formulario implements Serializable{
                             contenedor.agregarVista(vista);
                             vista.setId(recursosBaseDatos.guardarVista(vista));
                             break;
+                        case "multi foto":
+                            vista=new MultiImagen(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT,
+                                    recursosBaseDatos.agregarIdPantalla(), idLayout, jsonObject1.getBoolean("requerido"), jsonObject1.getBoolean("habilitado"),"",jsonObject1.getString("titulo"),
+                                    jsonObject1.getString("nombreVariable"));
+                            contenedor.agregarVista(vista);
+                            vista.setId(recursosBaseDatos.guardarVista(vista));
+                            break;
                         case "firma":
                             vista=new FirmaDigital(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT,
                                     recursosBaseDatos.agregarIdPantalla(), idLayout, jsonObject1.getBoolean("requerido"),

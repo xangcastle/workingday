@@ -292,7 +292,7 @@ public class Login extends AppCompatActivity {
      * @param password contraseña
      */
     private void solicitarLogin(final String userName, final String password) {
-        String url = "http://192.168.0.38:8000/dtracking/movil/login/";
+        String url = "http://192.168.1.17:8000/dtracking/movil/login/";
         /**
          * solicitud post al servidor
          */
