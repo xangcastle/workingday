@@ -1,5 +1,6 @@
 package com.valuarte.dtracking;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -29,6 +30,7 @@ import android.provider.MediaStore;
 import android.provider.Settings;
 import android.support.design.widget.FloatingActionButton;
 import android.os.Bundle;
+import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.AttributeSet;
@@ -66,6 +68,7 @@ import com.valuarte.dtracking.Util.ReceiverManager;
 import com.valuarte.dtracking.Util.SincronizacionGestionSMS;
 import com.valuarte.dtracking.Util.SincronizacionGestionWeb;
 import com.valuarte.dtracking.Util.Usuario;
+import com.valuarte.dtracking.Util.Utilidades;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -237,7 +240,11 @@ public class FormularioActivity extends AppCompatActivity implements Imagen.List
             ButterKnife.bind(this);
             setupToolbar();
             locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 1.0f, this);
+
+            if (!(ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED)) {
+                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 1.0f, this);
+            }
+
 
             recursosBaseDatos = new RecursosBaseDatos(this);
             conexionAInternet = new ConexionAInternet();
@@ -249,7 +256,7 @@ public class FormularioActivity extends AppCompatActivity implements Imagen.List
 
             rutas = new HashMap<>();
             rutasFirmas = new HashMap<>();
-            rutasMulti=new HashMap<>();
+            rutasMulti = new HashMap<>();
 
             Intent intent = getIntent();
             gestion = (Gestion) intent.getSerializableExtra("gestion");
@@ -269,21 +276,21 @@ public class FormularioActivity extends AppCompatActivity implements Imagen.List
                 rutasFirmas = (HashMap<Integer, String>) savedInstanceState.getSerializable("rutasFirmas");
                 cargarImagenes();
             }
+        } catch (Exception e) {
         }
-        catch (Exception e){}
     }
 
     public void onResume() {
         super.onResume();
-        if(registerReceiver==null)
+        if (registerReceiver == null)
             registerReceiver = new ReceiverManager(this);
 
         if (mensajeEnviadoIntent == null && mensajeEntregadoIntent == null) {
             mensajeEnviadoIntent = new MensajeEnviadoIntent(FormularioActivity.this);
             mensajeEntregadoIntent = new MensajeEntregadoIntent(null);
-        }else if(mensajeEnviadoIntent == null && mensajeEntregadoIntent != null) {
+        } else if (mensajeEnviadoIntent == null && mensajeEntregadoIntent != null) {
             mensajeEnviadoIntent = new MensajeEnviadoIntent(FormularioActivity.this);
-        }else {
+        } else {
             mensajeEntregadoIntent = new MensajeEntregadoIntent(null);
         }
 
@@ -369,7 +376,8 @@ public class FormularioActivity extends AppCompatActivity implements Imagen.List
                                     });
                                     mensajeError.show();
                                 }
-                            }catch (Exception e){}
+                            } catch (Exception e) {
+                            }
 
 
                         }
@@ -445,8 +453,7 @@ public class FormularioActivity extends AppCompatActivity implements Imagen.List
                 if (conexiones[1].trim().equals("3G") || conexiones[1].trim().equals("WIFI")) {
                     if (sePuedeSincronizarPorEsteMedio(conexiones[1])) {
                         sincronizarViaIntenet(jsonObject);
-                    }
-                    else {
+                    } else {
                         if (sePuedeSincronizarPorEsteMedio(conexiones[0])) {
                             sincronizarViaSMS(jsonObject);
                         } else {
@@ -483,14 +490,18 @@ public class FormularioActivity extends AppCompatActivity implements Imagen.List
     /**
      * Fuerza la obtencion de las coordenadas del gps
      */
-    private void forzarObtencionCoordenadas()
-    {
+    private void forzarObtencionCoordenadas() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            Toast.makeText(this, "Verifique los permisos y que el GPS este encendido", Toast.LENGTH_SHORT).show();
+            return;
+        }
         Location location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
         if (location != null) {
             latitudActual = location.getLatitude();
             longitudActual = location.getLongitude();
         }
     }
+
     /**
      * El formulario fue enviado
      * Sincroniza la gestion via internet, ya seaq conred 3g o wifi
@@ -742,19 +753,30 @@ public class FormularioActivity extends AppCompatActivity implements Imagen.List
         keys = rutasMulti.keySet();
         LinearLayout layoutImagenes;
         for (int id : keys) {
-            layoutImagenes=(LinearLayout) findViewById(id);
+            layoutImagenes = (LinearLayout) findViewById(id);
+            layoutImagenes.removeAllViews();
             LayoutInflater inflater = LayoutInflater.from(this);
-
             try {
-                JSONArray arrayImagenes=new JSONArray(rutasMulti.get(id));
-                for(int i=0; i<arrayImagenes.length();i++){
-                    View ImageLayout= inflater.inflate(R.layout.item_image_grid, null, false);
-                    ImageView image=(ImageView) ImageLayout.findViewById(R.id.image);
+                JSONArray arrayImagenes = new JSONArray(rutasMulti.get(id));
+                for (int i = 0; i < arrayImagenes.length(); i++) {
+                    View ImageLayout = inflater.inflate(R.layout.item_image_grid, null, false);
 
+                    Button borrar = (Button) ImageLayout.findViewById(R.id.borrarimagen);
+                    borrar.setTag(id + ";" + (i));
+                    borrar.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            borrarImagen(view);
+                        }
+                    });
+
+                    ImageView image = (ImageView) ImageLayout.findViewById(R.id.image);
                     Bitmap bitmap = BitmapFactory.decodeFile(arrayImagenes.getString(i));
                     if (bitmap != null) {
-                        image.setImageBitmap(Bitmap.createScaledBitmap(bitmap,200,200,false));
+                        image.setImageBitmap(Bitmap.createScaledBitmap(bitmap, 200, 200, false));
                     }
+
+
                     layoutImagenes.addView(ImageLayout);
                 }
             } catch (JSONException e) {
@@ -780,9 +802,10 @@ public class FormularioActivity extends AppCompatActivity implements Imagen.List
      */
     private void enCamaraResult(Intent data) {
         try {
+            Utilidades.savecompressImage(f.getAbsolutePath());
             Bitmap thumbnail = BitmapFactory.decodeFile(f.getAbsolutePath());
             if (thumbnail != null) {
-                if(findViewById(idImage) instanceof ImageView){
+                if (findViewById(idImage) instanceof ImageView) {
                     ImageView imageView = (ImageView) findViewById(idImage);
                     imageView.setImageBitmap(Bitmap.createScaledBitmap(thumbnail, imageView.getWidth(), imageView.getHeight(), false));
                     ByteArrayOutputStream bytes = new ByteArrayOutputStream();
@@ -798,12 +821,22 @@ public class FormularioActivity extends AppCompatActivity implements Imagen.List
                     fo.write(bytes.toByteArray());
                     fo.close();
                     f.delete();
-                }else {
-                    LinearLayout layoutImagenes=(LinearLayout) findViewById(idImage);
+                } else {
+                    LinearLayout layoutImagenes = (LinearLayout) findViewById(idImage);
                     LayoutInflater inflater = LayoutInflater.from(this);
-                    View ImageLayout= inflater.inflate(R.layout.item_image_grid, null, false);
+                    View ImageLayout = inflater.inflate(R.layout.item_image_grid, null, false);
 
-                    ImageView image=(ImageView) ImageLayout.findViewById(R.id.image);
+                    Button borrar = (Button) ImageLayout.findViewById(R.id.borrarimagen);
+
+                    borrar.setTag(idImage + ";" + layoutImagenes.getChildCount());
+                    borrar.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            borrarImagen(view);
+                        }
+                    });
+
+                    ImageView image = (ImageView) ImageLayout.findViewById(R.id.image);
                     image.setImageBitmap(Bitmap.createScaledBitmap(thumbnail, 200, 200, false));
 
 
@@ -815,8 +848,8 @@ public class FormularioActivity extends AppCompatActivity implements Imagen.List
 
                     String Imagenes = rutasMulti.get(idImage);
                     JSONArray arregloImagenes = new JSONArray();
-                    if(Imagenes!=null)
-                        arregloImagenes= new JSONArray(Imagenes);
+                    if (Imagenes != null)
+                        arregloImagenes = new JSONArray(Imagenes);
 
                     arregloImagenes.put(destination.getAbsolutePath());
 
@@ -842,6 +875,20 @@ public class FormularioActivity extends AppCompatActivity implements Imagen.List
 
     }
 
+    private void borrarImagen(View view){
+        int id = Integer.parseInt(view.getTag().toString().split(";")[0]);
+        int index = Integer.parseInt(view.getTag().toString().split(";")[1]);
+        try {
+            JSONArray arrayImagenes = new JSONArray(rutasMulti.get(id));
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                arrayImagenes.remove(index);
+                rutasMulti.put(id,arrayImagenes.toString());
+                cargarImagenes();
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
     /**
      * Controla la imagen que se obtiene desde la camara
      *
@@ -1162,6 +1209,9 @@ public class FormularioActivity extends AppCompatActivity implements Imagen.List
 
     @Override
     public void onProviderEnabled(String provider) {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
         Location location = locationManager.getLastKnownLocation(provider);
         if (location != null) {
             latitudActual = location.getLatitude();
