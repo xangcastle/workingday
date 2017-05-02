@@ -1,6 +1,11 @@
 package com.valuarte.dtracking.Util;
 
 import android.os.AsyncTask;
+import android.util.Log;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+
 import java.io.DataOutputStream;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -10,13 +15,12 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
-import android.util.Log;
 
 /**
  * Se encarga de la sincronizacion de imagenes al servidor
  * @version 1.0
  */
-public class SincronizacionImagenes extends AsyncTask<Void, Void, Integer> {
+public class SincronizacionMultiImagenes extends AsyncTask<Void, Void, Integer> {
     /**
      * Constante que la sincronización va tomar como codigo resultado, cuando la sincronizacion se crea
      */
@@ -61,7 +65,7 @@ public class SincronizacionImagenes extends AsyncTask<Void, Void, Integer> {
     /**
      * Ruta de la imagen a sincronizar
      */
-    private String rutaImagen;
+    private JSONArray rutaImagen;
     /**
      * Codigo del resultado que arrojo la sincronizacion
      */
@@ -69,18 +73,19 @@ public class SincronizacionImagenes extends AsyncTask<Void, Void, Integer> {
     /**
      * Escucha eventos cuando finaliza la sincronizacion
      */
-    private ListenerSincronizacionImagenes listenerSincronizacionImagenes;
+    private ListenerSincronizacionMultiImagenes listenerSincronizacionImagenes;
     /**
      * Titulo del campo
      */
     private String titulo;
-    public SincronizacionImagenes(int idGestion, String variable, String rutaImagen,
-                                  String titulo,ListenerSincronizacionImagenes listenerSincronizacionImagenes) {
+    public SincronizacionMultiImagenes(int idGestion, String variable,
+                                       JSONArray rutaImagen, String titulo,
+                                       ListenerSincronizacionMultiImagenes listenerSincronizacionMultiImagenes) {
         this.idGestion = idGestion;
         this.variable = variable;
         this.rutaImagen = rutaImagen;
         this.codigoResultado=SINCRONIZACIONCREADA;
-        this.listenerSincronizacionImagenes=listenerSincronizacionImagenes;
+        this.listenerSincronizacionImagenes=listenerSincronizacionMultiImagenes;
         this.titulo=titulo;
     }
 
@@ -93,16 +98,19 @@ public class SincronizacionImagenes extends AsyncTask<Void, Void, Integer> {
 
     @Override
     protected Integer doInBackground(Void... voids) {
-        ConexionHttp conexionHttp=null;
-        try {
-            conexionHttp=new ConexionHttp();
-        } catch (MalformedURLException e) {
-            return ERROR;
-        } catch (FileNotFoundException e) {
-           return ERROR;
+        int codigo=ENPROGRESO;
+        for(int i=0; i<getRutaImagen().length();i++){
+            ConexionHttp conexionHttp=null;
+            try {
+                conexionHttp=new ConexionHttp(i);
+            } catch (MalformedURLException e) {
+                return ERROR;
+            } catch (FileNotFoundException e) {
+                return ERROR;
+            }
+             codigo = conexionHttp.enviarInformacion(i);
         }
-        return conexionHttp.enviarInformacion();
-
+        return  codigo;
     }
 
     /**
@@ -133,8 +141,17 @@ public class SincronizacionImagenes extends AsyncTask<Void, Void, Integer> {
     /**
      * Ruta de la imagen a sincronizar
      */
-    public String getRutaImagen() {
+    public JSONArray getRutaImagen() {
         return rutaImagen;
+    }
+
+    public String getRutaImagen(int index) {
+        try {
+            return rutaImagen.getString(index);
+        } catch (JSONException e) {
+            e.printStackTrace();
+            return "";
+        }
     }
 
     /**
@@ -155,15 +172,15 @@ public class SincronizacionImagenes extends AsyncTask<Void, Void, Integer> {
          */
         private FileInputStream fileInputStream = null;
 
-       public ConexionHttp() throws MalformedURLException, FileNotFoundException {
+       public ConexionHttp(int index_imagen) throws MalformedURLException, FileNotFoundException {
                 connectURL = new URL(UPLOAD_URL);
-                fileInputStream = new FileInputStream(getRutaImagen());
+                fileInputStream = new FileInputStream(getRutaImagen(index_imagen));
         }
 
         /**
          * Envia la informacion al servidor
          */
-        public int enviarInformacion() {
+        public int enviarInformacion(int index) {
             String lineEnd = "\r\n";
             String twoHyphens = "--";
             String boundary = "*****";
@@ -204,7 +221,8 @@ public class SincronizacionImagenes extends AsyncTask<Void, Void, Integer> {
                 dos.writeBytes(getVariable());
                 dos.writeBytes(lineEnd);
                 dos.writeBytes(twoHyphens + boundary + lineEnd);
-                dos.writeBytes("Content-Disposition: form-data; name=\""+IMAGEN+"\";filename=\"" +"imagen.jpg"+"\"" + lineEnd);
+                dos.writeBytes("Content-Disposition: form-data; name=\""+IMAGEN+
+                        "\";filename=\"" + "imagen" + String.valueOf(index) + ".jpg" + "\"" + lineEnd);
                 dos.writeBytes(lineEnd);
 
                 Log.e(Tag, "Headers are written");
@@ -280,13 +298,13 @@ public class SincronizacionImagenes extends AsyncTask<Void, Void, Integer> {
     /**
      * Permite comunicar la sincronizacion con quien lo llama
      */
-    public interface ListenerSincronizacionImagenes
+    public interface ListenerSincronizacionMultiImagenes
     {
         /**
          * En caso de que la sincronizacion haya sido finalizado, bien o mal
          * @param codigo  el codigo que arrojo la sincronizacion
          * @param titulo  el titulo del campo que se sincronizo
          */
-        void enSincronizacionFinalizada(int codigo,String titulo);
+        void enSincronizacionFinalizada(int codigo, String titulo);
     }
 }

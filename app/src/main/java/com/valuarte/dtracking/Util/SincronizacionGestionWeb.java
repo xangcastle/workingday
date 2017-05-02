@@ -15,8 +15,10 @@ import com.valuarte.dtracking.ElementosGraficos.FirmaDigital;
 import com.valuarte.dtracking.ElementosGraficos.Formulario;
 import com.valuarte.dtracking.ElementosGraficos.Gestion;
 import com.valuarte.dtracking.ElementosGraficos.Imagen;
+import com.valuarte.dtracking.ElementosGraficos.MultiImagen;
 import com.valuarte.dtracking.ElementosGraficos.Vista;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -29,7 +31,8 @@ import java.util.Map;
  *
  * @version 1.o
  */
-public class SincronizacionGestionWeb implements SincronizacionImagenes.ListenerSincronizacionImagenes {
+public class SincronizacionGestionWeb implements SincronizacionImagenes.ListenerSincronizacionImagenes,
+SincronizacionMultiImagenes.ListenerSincronizacionMultiImagenes{
     /**
      * Ruta a la que se va hacer la sincronización
      */
@@ -157,8 +160,10 @@ public class SincronizacionGestionWeb implements SincronizacionImagenes.Listener
         ArrayList<Contenedor> contenedors = formulario.getContenedores();
         ArrayList<Vista> vistas;
         SincronizacionImagenes sincronizacionImagenes;
+        SincronizacionMultiImagenes sincronizacionMultiImagenes;
         FirmaDigital firmaDigital;
         Imagen imagen;
+        MultiImagen multi_imagen;
         for (Contenedor c : contenedors) {
             vistas = c.getVistas();
             for (Vista v : vistas) {
@@ -169,6 +174,31 @@ public class SincronizacionGestionWeb implements SincronizacionImagenes.Listener
                         sincronizacionImagenes = new SincronizacionImagenes(gestion.getIdgestion(),
                                 v.getNombreVariable(), imagen.getVal(), imagen.getTitulo(), this);
                         sincronizacionImagenes.execute();
+                    }
+                }
+                if (v instanceof MultiImagen) {
+                    multi_imagen=(MultiImagen)v;
+                    if(!multi_imagen.getVal().trim().equals("")) {
+                        String Imagenes =String.valueOf(multi_imagen.getVal());
+                        if(Imagenes!=null){
+                            try {
+                                JSONArray arregloImagenes= new JSONArray(Imagenes);
+                                for(int i=0; i<arregloImagenes.length(); i++){
+                                    cantidadImagenes += arregloImagenes.length();
+                                    sincronizacionMultiImagenes = new SincronizacionMultiImagenes(
+                                            gestion.getIdgestion(),
+                                            v.getNombreVariable(),
+                                            arregloImagenes,
+                                            multi_imagen.getTitulo(),
+                                            this);
+                                    sincronizacionMultiImagenes.execute();
+                                }
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+
+                        }
+
                     }
                 }
                 if (v instanceof FirmaDigital) {
