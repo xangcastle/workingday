@@ -52,7 +52,6 @@ public class ElementoCombo implements Serializable{
     public int getId() {
         return id;
     }
-
     /**
      * cadena que representa el valor del elemento
      */

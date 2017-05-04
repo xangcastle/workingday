@@ -377,6 +377,7 @@ public class FormularioActivity extends AppCompatActivity implements Imagen.List
                                     mensajeError.show();
                                 }
                             } catch (Exception e) {
+                                e.printStackTrace();
                             }
 
 
@@ -1025,7 +1026,7 @@ public class FormularioActivity extends AppCompatActivity implements Imagen.List
             }
             jsonObject.put("campos", jsonObject1);
         } catch (JSONException ex) {
-
+            ex.printStackTrace();
         }
         return jsonObject;
     }

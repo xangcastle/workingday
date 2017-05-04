@@ -107,7 +107,7 @@ public class ComboCaja extends Vista {
         int id = -1;
         for (ElementoCombo elementoCombo : elementoCombos) {
             if (elementoCombo.isSeleccionado()) {
-                id = elementoCombo.getId();
+                id = elementoCombo.getIdElemento();
             }
         }
         if (id != -1) {

@@ -25,6 +25,9 @@ import com.valuarte.dtracking.Excepciones.ValorRequeridoException;
 import com.valuarte.dtracking.FormularioActivity;
 import com.valuarte.dtracking.R;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -164,6 +167,7 @@ public class MultiImagen extends Vista {
      */
     @Override
     public Object getValor() throws NoSoportaValorException,ValorRequeridoException {
+        boolean encontrado=true;
        if(requerido)
        {
            if(valor.trim().equals(""))
@@ -173,15 +177,26 @@ public class MultiImagen extends Vista {
            }
            else
            {
-               File file=new File(valor);
-               if(file.exists())
-               {
-                   return null;
+               try {
+                   JSONArray jImagenes = new JSONArray(valor);
+                   for(int i=0; i<jImagenes.length();i++){
+                       File file=new File(jImagenes.getString(i));
+                       if(!file.exists())
+                       {
+                           encontrado=false;
+                       }
+                   }
+                   if(encontrado){
+                       return valor;
+                   }else {
+                       throw new ValorRequeridoException("El campo " + getTitulo() + " tiene una imagen que no existe ", nombreVariable,
+                               getTitulo(), view.getX(), view.getY());
+                   }
+
+               } catch (JSONException e) {
+                   e.printStackTrace();
                }
-               else {
-                   throw new ValorRequeridoException("El campo " + getTitulo() + " tiene una imagen que no existeo", nombreVariable,
-                           getTitulo(), view.getX(), view.getY());
-               }
+
            }
        }
         return null;

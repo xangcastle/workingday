@@ -81,7 +81,8 @@ public class Formulario implements Serializable{
         this.contenedores=new ArrayList<>();
         int idFormulario=recursosBaseDatos.guardarFormulario(this);
         this.setId(idFormulario);
-        Contenedor contenedor = new Contenedor(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT, recursosBaseDatos.agregarIdPantalla()
+        Contenedor contenedor = new Contenedor(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT,
+                recursosBaseDatos.agregarIdPantalla()
                 , -1, false,  "LinearLayout", "vertical", true, idFormulario);
         int idLayout = recursosBaseDatos.guardarVista(contenedor);
         JSONArray campos = null;
@@ -93,7 +94,7 @@ public class Formulario implements Serializable{
         if (campos != null) {
             JSONObject jsonObject1;
             JSONArray elementos;
-            JSONObject jsonObject2;
+            JSONObject jelemento;
             ArrayList<ElementoCombo> elementoCombos;
             ArrayList<RadioBoton> radioBotons;
             Vista vista = null;
@@ -129,16 +130,16 @@ public class Formulario implements Serializable{
                             radioBotons = new ArrayList<>();
                             boolean seleccionado;
                             for (int j = 0; j < elementos.length(); j++) {
-                                jsonObject2 = elementos.getJSONObject(j);
-                                if (-1 == jsonObject2.getInt("id")) {
+                                jelemento = elementos.getJSONObject(j);
+                                if (-1 == jelemento.getInt("id")) {
                                     seleccionado = true;
                                 } else {
                                     seleccionado = false;
                                 }
                                 radioBoton=new RadioBoton(RadioGroup.LayoutParams.WRAP_CONTENT, RadioGroup.LayoutParams.WRAP_CONTENT
                                         , recursosBaseDatos.agregarIdPantalla(), idLayout, jsonObject1.getBoolean("requerido"),seleccionado,
-                                        jsonObject1.getString("nombreVariable"), jsonObject2.getString("valor"),true,
-                                        jsonObject2.getInt("id"),idGroup);
+                                        jsonObject1.getString("nombreVariable"), jelemento.getString("valor"),true,
+                                        jelemento.getInt("id"),idGroup);
                                 radioBoton.setId(recursosBaseDatos.guardarVista(radioBoton));
                                 radioBotons.add(radioBoton);
                             }
@@ -148,18 +149,19 @@ public class Formulario implements Serializable{
                             break;
                         case "combobox":
                             elementos = jsonObject1.getJSONArray("elementos");
-                            vista = new ComboCaja(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT, recursosBaseDatos.agregarIdPantalla(), idLayout, jsonObject1.getBoolean("requerido")
+                            vista = new ComboCaja(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT,
+                                    recursosBaseDatos.agregarIdPantalla(), idLayout, jsonObject1.getBoolean("requerido")
                                     ,jsonObject1.getString("nombreVariable"), jsonObject1.getString("titulo")
                                     , jsonObject1.getBoolean("habilitado"));
                             int idCombo=recursosBaseDatos.guardarVista(vista);
                             elementoCombos = new ArrayList<>();
                             idSele = -1;
                             for (int j = 0; j < elementos.length(); j++) {
-                                jsonObject2 = elementos.getJSONObject(j);
-                                if (jsonObject2.getInt("id") == idSele) {
-                                    elementoCombo=new ElementoCombo(jsonObject2.getInt("id"), jsonObject2.getString("valor"), true,idCombo);
+                                jelemento = elementos.getJSONObject(j);
+                                if (jelemento.getInt("id") == idSele) {
+                                    elementoCombo=new ElementoCombo(jelemento.getInt("id"), jelemento.getString("valor"), true,idCombo);
                                 } else {
-                                    elementoCombo=new ElementoCombo(jsonObject2.getInt("id"), jsonObject2.getString("valor"), false,idCombo);
+                                    elementoCombo=new ElementoCombo(jelemento.getInt("id"), jelemento.getString("valor"), false,idCombo);
                                 }
                                 elementoCombo.setId(recursosBaseDatos.guardarElementoCombo(elementoCombo));
                                 elementoCombos.add(elementoCombo);
