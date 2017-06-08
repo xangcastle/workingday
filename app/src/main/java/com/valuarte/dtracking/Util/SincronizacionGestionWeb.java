@@ -17,6 +17,7 @@ import org.androidannotations.annotations.Background;
 import org.androidannotations.annotations.Bean;
 import org.androidannotations.annotations.EBean;
 import org.androidannotations.annotations.EService;
+import org.androidannotations.annotations.RootContext;
 import org.androidannotations.annotations.UiThread;
 import org.androidannotations.rest.spring.annotations.RestService;
 import org.json.JSONArray;
@@ -35,6 +36,9 @@ import java.util.Map;
 @EBean
 public class SincronizacionGestionWeb implements SincronizacionImagenes.ListenerSincronizacionImagenes,
 SincronizacionMultiImagenes.ListenerSincronizacionMultiImagenes{
+
+    @RootContext
+    Context context;
 
 
     /**
@@ -91,6 +95,11 @@ SincronizacionMultiImagenes.ListenerSincronizacionMultiImagenes{
      */
     @Background
     public void sincronizarGestion() {
+        if(restClient==null)
+            restClient=new RestClient_(context);
+        MyRestErrorHandler myRestErrorHandler=MyRestErrorHandler_.getInstance_(context);
+        restClient.setRestErrorHandler(myRestErrorHandler);
+
         Log.e("json",jsonObject.toString());
         String json;
         try {
@@ -138,7 +147,7 @@ SincronizacionMultiImagenes.ListenerSincronizacionMultiImagenes{
                     if(!imagen.getVal().trim().equals("")) {
                         cantidadImagenes += 1;
                         sincronizacionImagenes = new SincronizacionImagenes(gestion.getIdgestion(),
-                                v.getNombreVariable(), imagen.getVal(), imagen.getTitulo(), this);
+                                v.getNombreVariable(), imagen.getVal(), imagen.getTitulo(), this, context);
                         sincronizacionImagenes.execute();
                     }
                 }
@@ -149,22 +158,18 @@ SincronizacionMultiImagenes.ListenerSincronizacionMultiImagenes{
                         if(Imagenes!=null){
                             try {
                                 JSONArray arregloImagenes= new JSONArray(Imagenes);
-                                for(int i=0; i<arregloImagenes.length(); i++){
-                                    cantidadImagenes += arregloImagenes.length();
-                                    sincronizacionMultiImagenes = new SincronizacionMultiImagenes(
-                                            gestion.getIdgestion(),
-                                            v.getNombreVariable(),
-                                            arregloImagenes,
-                                            multi_imagen.getTitulo(),
-                                            this);
-                                    sincronizacionMultiImagenes.execute();
-                                }
+                                cantidadImagenes += arregloImagenes.length();
+                                sincronizacionMultiImagenes = new SincronizacionMultiImagenes(
+                                        gestion.getIdgestion(),
+                                        v.getNombreVariable(),
+                                        arregloImagenes,
+                                        multi_imagen.getTitulo(),
+                                        this, context);
+                                sincronizacionMultiImagenes.execute();
                             } catch (JSONException e) {
                                 e.printStackTrace();
                             }
-
                         }
-
                     }
                 }
                 if (v instanceof FirmaDigital) {
@@ -173,7 +178,7 @@ SincronizacionMultiImagenes.ListenerSincronizacionMultiImagenes{
                     if(!firmaDigital.getVal().trim().equals("")) {
                         cantidadImagenes += 1;
                         sincronizacionImagenes = new SincronizacionImagenes(gestion.getIdgestion(),
-                                v.getNombreVariable(), firmaDigital.getVal(), firmaDigital.getTitulo(), this);
+                                v.getNombreVariable(), firmaDigital.getVal(), firmaDigital.getTitulo(), this, context);
                         sincronizacionImagenes.execute();
                     }
                 }

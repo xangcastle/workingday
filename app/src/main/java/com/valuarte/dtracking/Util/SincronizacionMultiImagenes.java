@@ -1,5 +1,6 @@
 package com.valuarte.dtracking.Util;
 
+import android.content.Context;
 import android.os.AsyncTask;
 import android.util.Log;
 
@@ -78,15 +79,19 @@ public class SincronizacionMultiImagenes extends AsyncTask<Void, Void, Integer> 
      * Titulo del campo
      */
     private String titulo;
+
+    private Context context;
     public SincronizacionMultiImagenes(int idGestion, String variable,
                                        JSONArray rutaImagen, String titulo,
-                                       ListenerSincronizacionMultiImagenes listenerSincronizacionMultiImagenes) {
+                                       ListenerSincronizacionMultiImagenes listenerSincronizacionMultiImagenes,
+                                       Context context) {
         this.idGestion = idGestion;
         this.variable = variable;
         this.rutaImagen = rutaImagen;
         this.codigoResultado=SINCRONIZACIONCREADA;
         this.listenerSincronizacionImagenes=listenerSincronizacionMultiImagenes;
         this.titulo=titulo;
+        this.context=context;
     }
 
     /**
@@ -100,7 +105,7 @@ public class SincronizacionMultiImagenes extends AsyncTask<Void, Void, Integer> 
     protected Integer doInBackground(Void... voids) {
         int codigo=ENPROGRESO;
         for(int i=0; i<getRutaImagen().length();i++){
-            ConexionHttp conexionHttp=null;
+            /*ConexionHttp conexionHttp=null;
             try {
                 conexionHttp=new ConexionHttp(i);
             } catch (MalformedURLException e) {
@@ -108,7 +113,14 @@ public class SincronizacionMultiImagenes extends AsyncTask<Void, Void, Integer> 
             } catch (FileNotFoundException e) {
                 return ERROR;
             }
-             codigo = conexionHttp.enviarInformacion(i);
+            codigo = conexionHttp.enviarInformacion(i);
+            */
+            String respuesta = Utilidades.cargarImagen_Gestion(idGestion,variable,getRutaImagen(i),context,i);
+            if(respuesta!=null)
+                codigo = IMAGENSUBIDA;
+            else
+                codigo= ERROR;
+
         }
         return  codigo;
     }

@@ -27,6 +27,7 @@ import com.valuarte.dtracking.ElementosGraficos.TipoGestion;
 import com.valuarte.dtracking.Util.ConexionAInternet;
 import com.valuarte.dtracking.Util.MyRestErrorHandler;
 import com.valuarte.dtracking.Util.RestClient;
+import com.valuarte.dtracking.Util.SincronizadorBackground;
 import com.valuarte.dtracking.Util.Usuario;
 
 import org.androidannotations.annotations.AfterViews;
@@ -165,6 +166,11 @@ public class MainActivity extends BaseActivity implements AdapterTipoGestiones.L
                     dialogoCargaFormularios.setCancelable(true);
                     dialogoCargaFormularios.setProgressStyle(ProgressDialog.STYLE_SPINNER);
                     dialogoCargaFormularios.show();
+
+                    Intent intent = new Intent(MainActivity.this, SincronizadorBackground.class);
+                    sendBroadcast(intent);
+
+
                     consultarFormularios();
                 } else {
                     construirError("No tiene conexión a internet");

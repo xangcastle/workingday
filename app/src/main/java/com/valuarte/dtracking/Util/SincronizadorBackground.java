@@ -193,11 +193,10 @@ public class SincronizadorBackground extends BroadcastReceiver implements Mensaj
             if (conexiones[0].trim().equals("3G") || conexiones[0].trim().equals("WIFI")) {
                 if (sePuedeSincronizarPorEsteMedio(conexiones[0])) {
                     sincronizarViaIntenet(jsonObject, gestion);
-                } else {
-                    if (sePuedeSincronizarPorEsteMedio(conexiones[1])) {
-                        sincronizarViaSMS(jsonObject, gestion);
-                    }
-                }
+                } else if (sePuedeSincronizarPorEsteMedio(conexiones[1])) {
+                        sincronizarViaIntenet(jsonObject, gestion);
+                }else
+                    sincronizarViaSMS(jsonObject, gestion);
             } else {
                 if (conexiones[1].trim().equals("3G") || conexiones[1].trim().equals("WIFI")) {
                     if (sePuedeSincronizarPorEsteMedio(conexiones[1])) {
@@ -244,7 +243,7 @@ public class SincronizadorBackground extends BroadcastReceiver implements Mensaj
      * @param jsonObject objeto json que contiene la infromacion para enviar via sms
      */
     private void sincronizarViaIntenet(JSONObject jsonObject, Gestion gestion) {
-        SincronizacionGestionWeb sincronizacionGestionWeb = new SincronizacionGestionWeb();
+        SincronizacionGestionWeb sincronizacionGestionWeb = SincronizacionGestionWeb_.getInstance_(context);
         sincronizacionGestionWeb.gestion=gestion;
         sincronizacionGestionWeb.jsonObject=jsonObject;
         sincronizacionGestionWeb.listenerSincronizacionWeb=this;

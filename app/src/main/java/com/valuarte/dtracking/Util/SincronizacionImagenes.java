@@ -1,5 +1,6 @@
 package com.valuarte.dtracking.Util;
 
+import android.content.Context;
 import android.os.AsyncTask;
 import java.io.DataOutputStream;
 import java.io.FileInputStream;
@@ -74,14 +75,19 @@ public class SincronizacionImagenes extends AsyncTask<Void, Void, Integer> {
      * Titulo del campo
      */
     private String titulo;
+
+    private Context context;
+
     public SincronizacionImagenes(int idGestion, String variable, String rutaImagen,
-                                  String titulo,ListenerSincronizacionImagenes listenerSincronizacionImagenes) {
+                                  String titulo, ListenerSincronizacionImagenes listenerSincronizacionImagenes,
+                                  Context context) {
         this.idGestion = idGestion;
         this.variable = variable;
         this.rutaImagen = rutaImagen;
         this.codigoResultado=SINCRONIZACIONCREADA;
         this.listenerSincronizacionImagenes=listenerSincronizacionImagenes;
         this.titulo=titulo;
+        this.context=context;
     }
 
     /**
@@ -93,16 +99,21 @@ public class SincronizacionImagenes extends AsyncTask<Void, Void, Integer> {
 
     @Override
     protected Integer doInBackground(Void... voids) {
-        ConexionHttp conexionHttp=null;
+        /*ConexionHttp conexionHttp=null;
         try {
             conexionHttp=new ConexionHttp();
         } catch (MalformedURLException e) {
             return ERROR;
         } catch (FileNotFoundException e) {
            return ERROR;
-        }
-        return conexionHttp.enviarInformacion();
+        }*/
 
+        String resultado =  Utilidades.cargarImagen_Gestion(idGestion,variable,rutaImagen,context, null);
+        if(resultado!=null)
+            return  IMAGENSUBIDA;
+        else
+            return ERROR;
+        //return conexionHttp.enviarInformacion();
     }
 
     /**
@@ -144,138 +155,6 @@ public class SincronizacionImagenes extends AsyncTask<Void, Void, Integer> {
         return codigoResultado;
     }
 
-
-    public class ConexionHttp implements Runnable {
-        /**
-         * URL a la que se va a conectar para solicitar el servicio
-         */
-        private URL connectURL;
-        /**
-         * Archivo que contiene la imagen
-         */
-        private FileInputStream fileInputStream = null;
-
-       public ConexionHttp() throws MalformedURLException, FileNotFoundException {
-                connectURL = new URL(UPLOAD_URL);
-                fileInputStream = new FileInputStream(getRutaImagen());
-        }
-
-        /**
-         * Envia la informacion al servidor
-         */
-        public int enviarInformacion() {
-            String lineEnd = "\r\n";
-            String twoHyphens = "--";
-            String boundary = "*****";
-            String Tag = "fSnd";
-            try {
-                Log.e(Tag, "Starting Http File Sending to URL");
-                codigoResultado=ENPROGRESO;
-                // Open a HTTP connection to the URL
-                HttpURLConnection conn = (HttpURLConnection) connectURL.openConnection();
-
-                // Allow Inputs
-                conn.setDoInput(true);
-
-                // Allow Outputs
-                conn.setDoOutput(true);
-
-                // Don't use a cached copy.
-                conn.setUseCaches(false);
-
-                // Use a post method.
-                conn.setRequestMethod("POST");
-
-                conn.setRequestProperty("Connection", "Keep-Alive");
-
-                conn.setRequestProperty("Content-Type", "multipart/form-data;boundary=" + boundary);
-
-                DataOutputStream dos = new DataOutputStream(conn.getOutputStream());
-
-                dos.writeBytes(twoHyphens + boundary + lineEnd);
-                dos.writeBytes("Content-Disposition: form-data; name=\""+GESTION+"\"" + lineEnd);
-                dos.writeBytes(lineEnd);
-                dos.writeBytes(Integer.toString(getIdGestion()));
-                dos.writeBytes(lineEnd);
-                dos.writeBytes(twoHyphens + boundary + lineEnd);
-
-                dos.writeBytes("Content-Disposition: form-data; name=\""+VARIABLE+"\"" + lineEnd);
-                dos.writeBytes(lineEnd);
-                dos.writeBytes(getVariable());
-                dos.writeBytes(lineEnd);
-                dos.writeBytes(twoHyphens + boundary + lineEnd);
-                dos.writeBytes("Content-Disposition: form-data; name=\""+IMAGEN+"\";filename=\"" +"imagen.jpg"+"\"" + lineEnd);
-                dos.writeBytes(lineEnd);
-
-                Log.e(Tag, "Headers are written");
-
-                // create a buffer of maximum size
-                int bytesAvailable = fileInputStream.available();
-
-                int maxBufferSize = 1024;
-                int bufferSize = Math.min(bytesAvailable, maxBufferSize);
-                byte[] buffer = new byte[bufferSize];
-
-                // read file and write it into form...
-                int bytesRead = fileInputStream.read(buffer, 0, bufferSize);
-
-                while (bytesRead > 0) {
-                    dos.write(buffer, 0, bufferSize);
-                    bytesAvailable = fileInputStream.available();
-                    bufferSize = Math.min(bytesAvailable, maxBufferSize);
-                    bytesRead = fileInputStream.read(buffer, 0, bufferSize);
-                }
-                dos.writeBytes(lineEnd);
-                dos.writeBytes(twoHyphens + boundary + twoHyphens + lineEnd);
-
-                // close streams
-                fileInputStream.close();
-
-                dos.flush();
-
-                Log.e(Tag, "File Sent, Response: " + String.valueOf(conn.getResponseMessage()));
-
-                //  imprimirBody(conn);
-                InputStream is = conn.getInputStream();
-
-                // retrieve the response from server
-                int ch;
-
-                StringBuffer b = new StringBuffer();
-                while ((ch = is.read()) != -1) {
-                    b.append((char) ch);
-                }
-                String s = b.toString();
-                Log.e("Response", s);
-                dos.close();
-                if(conn.getResponseCode()==200 && !s.equals(""))
-                {
-                    return IMAGENSUBIDA;
-                }
-                else
-                {
-                    return ERROR;
-                }
-            } catch (MalformedURLException ex) {
-                Log.e(Tag, "URL error: " + ex.getMessage(), ex);
-                return ERROR;
-            } catch (FileNotFoundException ioe) {
-                Log.e(Tag, "File not found: " + ioe.getMessage(), ioe);
-                return ERROR;
-            } catch (ProtocolException e) {
-                Log.e("error protocolo",e.getMessage());
-                return ERROR;
-            } catch (IOException e) {
-                Log.e("IO Error",e.getMessage());
-                return ERROR;
-            }
-        }
-
-        @Override
-        public void run() {
-            // TODO Auto-generated method stub
-        }
-    }
 
     /**
      * Permite comunicar la sincronizacion con quien lo llama

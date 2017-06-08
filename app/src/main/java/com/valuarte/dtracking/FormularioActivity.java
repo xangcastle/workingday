@@ -67,6 +67,7 @@ import com.valuarte.dtracking.Util.EncodingJSON;
 import com.valuarte.dtracking.Util.ReceiverManager;
 import com.valuarte.dtracking.Util.SincronizacionGestionSMS;
 import com.valuarte.dtracking.Util.SincronizacionGestionWeb;
+import com.valuarte.dtracking.Util.SincronizacionGestionWeb_;
 import com.valuarte.dtracking.Util.Usuario;
 import com.valuarte.dtracking.Util.Utilidades;
 
@@ -356,7 +357,7 @@ public class FormularioActivity extends AppCompatActivity implements Imagen.List
                                         gestion.setLongitud(longitudActual);
                                     }
                                     gestion.setFecha(Gestion.generarFechaDesdeCalendar(Calendar.getInstance()));
-                                    JSONObject jsonObject = obtenerCampos(formulario, gestion);
+                                    JSONObject jsonObject = Utilidades.obtenerCampos(formulario, gestion, FormularioActivity.this);
                                     Formulario f = guardarFormularioCompleto();
                                     gestion.setFormulario(f);
                                     gestion.setEsBorrador(true);
@@ -516,7 +517,7 @@ public class FormularioActivity extends AppCompatActivity implements Imagen.List
         cargaSMS.setProgressStyle(ProgressDialog.STYLE_SPINNER);
         cargaSMS.show();
 
-        SincronizacionGestionWeb sincronizacionGestionWeb = new SincronizacionGestionWeb();
+        SincronizacionGestionWeb sincronizacionGestionWeb = SincronizacionGestionWeb_.getInstance_(this);
         sincronizacionGestionWeb.gestion=gestion;
         sincronizacionGestionWeb.jsonObject=jsonObject;
         sincronizacionGestionWeb.idUser= usuario.getId();
@@ -1041,38 +1042,7 @@ public class FormularioActivity extends AppCompatActivity implements Imagen.List
         }
     }
 
-    public JSONObject obtenerCampos(Formulario formulario, Gestion gestion) throws ValorRequeridoException {
-        JSONObject jsonObject = new JSONObject();
-        JSONObject jsonObject1;
-        try {
-            jsonObject.put("gestion", gestion.getIdgestion());
-            jsonObject.put("usuario", usuario.getId());
-            jsonObject.put("latitud", gestion.getLatitud());
-            jsonObject.put("longitud", gestion.getLongitud());
-            jsonObject.put("fecha", gestion.getFecha());
-            jsonObject1 = new JSONObject();
-            ArrayList<Vista> vistas = new ArrayList<>();
-            Object object;
-            for (Contenedor c : formulario.getContenedores()) {
-                vistas = c.getVistas();
-                for (Vista v : vistas) {
-                    v.actualizarValores();
-                    try {
-                        object = v.getValor();
-                        if (object != null) {
-                            jsonObject1.put(v.getNombreVariable(), object);
-                        }
-                    } catch (NoSoportaValorException e) {
-                        continue;
-                    }
-                }
-            }
-            jsonObject.put("campos", jsonObject1);
-        } catch (JSONException ex) {
-            ex.printStackTrace();
-        }
-        return jsonObject;
-    }
+
 
     /**
      * Funcion que inicializa el dialogo de la firma
