@@ -4,12 +4,7 @@ package com.valuarte.dtracking.Util;
 import android.content.Context;
 import android.util.Log;
 
-import com.android.volley.Request;
-import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.StringRequest;
-import com.android.volley.toolbox.Volley;
+
 import com.valuarte.dtracking.ElementosGraficos.Contenedor;
 import com.valuarte.dtracking.ElementosGraficos.FirmaDigital;
 import com.valuarte.dtracking.ElementosGraficos.Formulario;
@@ -18,6 +13,12 @@ import com.valuarte.dtracking.ElementosGraficos.Imagen;
 import com.valuarte.dtracking.ElementosGraficos.MultiImagen;
 import com.valuarte.dtracking.ElementosGraficos.Vista;
 
+import org.androidannotations.annotations.Background;
+import org.androidannotations.annotations.Bean;
+import org.androidannotations.annotations.EBean;
+import org.androidannotations.annotations.EService;
+import org.androidannotations.annotations.UiThread;
+import org.androidannotations.rest.spring.annotations.RestService;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -31,56 +32,42 @@ import java.util.Map;
  *
  * @version 1.o
  */
+@EBean
 public class SincronizacionGestionWeb implements SincronizacionImagenes.ListenerSincronizacionImagenes,
 SincronizacionMultiImagenes.ListenerSincronizacionMultiImagenes{
-    /**
-     * Ruta a la que se va hacer la sincronización
-     */
-    public static final String URL = "http://192.168.0.38:8000/dtracking/movil/cargar_gestion/";
-    /**
-     * Contexto de la aplicacion
-     */
-    private Context context;
+
+
     /**
      * Gestion a sincronizar con el web service
      */
-    private Gestion gestion;
-    /**
-     * cola de peticiones web
-     */
-    private RequestQueue requestQueue;
+    public Gestion gestion;
     /**
      * Escucha los eventos cuando se termina la sincronizacion web
      */
-    private ListenerSincronizacionWeb listenerSincronizacionWeb;
+    public ListenerSincronizacionWeb listenerSincronizacionWeb;
     /**
      * Objeto json que contiene los campos de la gestion
      */
-    private JSONObject jsonObject;
+    public JSONObject jsonObject;
     /**
      * Identificador del usuario que realizo la gestion
      */
-    private int idUser;
+    public int idUser;
 
     /**
      * Representa el titulo de las imagenes que no pudieron ser subidas
      */
-    private ArrayList<String> imagenesNoSincronizadas;
+    public ArrayList<String> imagenesNoSincronizadas;
     /**
      * cantidad de imagenes que se van a sincronizar
      */
-    private int cantidadImagenes;
+    public int cantidadImagenes;
 
-    public SincronizacionGestionWeb(Context context, Gestion gestion, JSONObject jsonObject,
-                                    ListenerSincronizacionWeb listenerSincronizacionWeb, int idUser) {
-        this.context = context;
-        this.gestion = gestion;
-        requestQueue = Volley.newRequestQueue(context);
-        this.listenerSincronizacionWeb = listenerSincronizacionWeb;
-        this.jsonObject = jsonObject;
+    RestClient restClient;
+
+    public SincronizacionGestionWeb() {
         imagenesNoSincronizadas = new ArrayList<>();
         cantidadImagenes = 0;
-        this.idUser=idUser;
     }
 
     /**
@@ -102,60 +89,39 @@ SincronizacionMultiImagenes.ListenerSincronizacionMultiImagenes{
     /**
      * Sincroniza la gestion con el web service, tanto el texto, como las imagenes
      */
+    @Background
     public void sincronizarGestion() {
         Log.e("json",jsonObject.toString());
-        /**
-         * solicitud post al servidor
-         */
-        StringRequest postRequest = new StringRequest(Request.Method.POST, URL,
-                new Response.Listener<String>() {
-                    /**
-                     * obtiene la respuesta que envia el servior
-                     * @param response
-                     */
-                    @Override
-                    public void onResponse(String response) {
-                        Log.e("responseee", response);
-                        sincronizarImagenesDeLaGestion();
-                    }
-                },
-
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        Log.e("error", "error");
-                        error.printStackTrace();
-                        listenerSincronizacionWeb.enSincronizacionFallida("La sincronizacion falló",gestion.getId());
-                    }
-                }
-        ) {
-            @Override
-            protected Map<String, String> getParams() {
-                Map<String, String> params = new HashMap<String, String>();
-                JSONObject j = new JSONObject();
-                params.put("gestion", Integer.toString(gestion.getIdgestion()));
-                params.put("latitude", Double.toString(gestion.getLatitud()));
-                params.put("longitude", Double.toString(gestion.getLongitud()));
-                params.put("fecha", gestion.getFechaDDMMAA());
-                try {
-                    String json= jsonObject.getJSONObject("campos").toString();
-                    json=json.replace("\"","&");
-                    json=json.replace("&","'");
-                    params.put("json", json);
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-                params.put("user", Integer.toString(idUser));
-                return params;
-            }
-        };
-        requestQueue.add(postRequest);
+        String json;
+        try {
+            json= jsonObject.getJSONObject("campos").toString();
+            json=json.replace("\"","&");
+            json=json.replace("&","'");
+        } catch (JSONException e) {
+            return;
+        }
+        String respuesta=restClient.cargar_gestion(
+                Integer.toString(gestion.getIdgestion()),
+                Double.toString(gestion.getLatitud()),
+                Double.toString(gestion.getLongitud()),
+                gestion.getFechaDDMMAA(),
+                json,
+                Integer.toString(idUser)
+                );
+        if(respuesta!=null){
+            Log.e("responseee", respuesta);
+            sincronizarImagenesDeLaGestion();
+        }else {
+            Log.e("error", "error");
+            listenerSincronizacionWeb.enSincronizacionFallida("La sincronizacion falló",gestion.getId());
+        }
     }
 
     /**
      * Sincroniza las imagenes de la gestion
      */
-    private void sincronizarImagenesDeLaGestion() {
+    @UiThread
+    void sincronizarImagenesDeLaGestion() {
         Formulario formulario = gestion.getFormulario();
         ArrayList<Contenedor> contenedors = formulario.getContenedores();
         ArrayList<Vista> vistas;
@@ -222,6 +188,7 @@ SincronizacionMultiImagenes.ListenerSincronizacionMultiImagenes{
      * @param titulo el titulo del campo que se sincronizo
      */
     @Override
+    @UiThread
     public void enSincronizacionFinalizada(int codigo, String titulo) {
             cantidadImagenes-=1;
             if (codigo != SincronizacionImagenes.IMAGENSUBIDA) {

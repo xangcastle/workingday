@@ -1,5 +1,6 @@
 package com.valuarte.dtracking.Util;
 
+import android.Manifest;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
@@ -12,18 +13,18 @@ import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
+import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.android.volley.Request;
-import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.StringRequest;
-import com.android.volley.toolbox.Volley;
+
 import com.valuarte.dtracking.BaseDatos.RecursosBaseDatos;
 import com.valuarte.dtracking.ElementosGraficos.Gestion;
 
+import org.androidannotations.annotations.Background;
+import org.androidannotations.annotations.Bean;
+import org.androidannotations.annotations.EBean;
+import org.androidannotations.rest.spring.annotations.RestService;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -36,6 +37,7 @@ import java.util.Map;
  *
  * @version 1.0
  */
+@EBean
 public class SincronizadorPosicionActual extends BroadcastReceiver implements LocationListener {
     /**
      * Contexto de la aplicacion
@@ -57,6 +59,12 @@ public class SincronizadorPosicionActual extends BroadcastReceiver implements Lo
      * El usuario en sesion
      */
     private Usuario usuario;
+
+    @RestService
+    RestClient restClient;
+    @Bean
+    MyRestErrorHandler myErrorhandler;
+
     @Override
     public void onReceive(Context context, Intent intent) {
         recursosBaseDatos = new RecursosBaseDatos(context);
@@ -73,6 +81,10 @@ public class SincronizadorPosicionActual extends BroadcastReceiver implements Lo
             //obtenemos la posicion actual
             if (tieneGpsActivado()) {
                 Log.e("activado", "activado");
+                if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                        && ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                   return;
+                }
                 Location location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
 
                 if (location != null) {
@@ -94,7 +106,6 @@ public class SincronizadorPosicionActual extends BroadcastReceiver implements Lo
                     }
                 } else {
                     Toast.makeText(context, "La localizacion esta nula primero", Toast.LENGTH_SHORT).show();
-                    //reiniciarServicio(context, usuario);
                 }
             } else {
                 turnGPSOn();
@@ -145,50 +156,22 @@ reiniciarSincronizacion(usuario);
     }
     /**
      * Sincroniza la posicion que se le manda en el json al servidro
-     * @param requestQueue cola de peticiones al servidor
      * @param jsonObject objketo json con la latitud, longitud, id del usuario y fecha
      */
-    public static void sincronizarPosicionViaWeb(RequestQueue requestQueue, final JSONObject jsonObject,final Context context)
+    @Background
+    public  void sincronizarPosicionViaWeb(final JSONObject jsonObject)
     {
-        String url="http://www.deltacopiers.com/dtracking/movil/seguimiento_gps/";
-        /**
-         * solicitud post al servidor
-         */
-        StringRequest postRequest = new StringRequest(Request.Method.POST, url,
-                new Response.Listener<String>() {
-                    /**
-                     * obtiene la respuesta que envia el servior
-                     *
-                     * @param response
-                     */
-                    @Override
-                    public void onResponse(String response) {
-                       Log.e("respuesta", response);
-                    }
-                },
-
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-
-                    }
-                }
-        ) {
-            @Override
-            protected Map<String, String> getParams() {
-                Map<String, String> params = new HashMap<String, String>();
-                try {
-                    params.put("user",Integer.toString(jsonObject.getInt("user")));
-                    params.put("latitude",Double.toString(jsonObject.getDouble("latitude")));
-                    params.put("longitude",Double.toString(jsonObject.getDouble("longitude")));
-                    params.put("fecha", jsonObject.getString("fecha"));
-                } catch (JSONException e) {
-                    params = new HashMap<>();
-                }
-                return params;
-            }
-        };
-        requestQueue.add(postRequest);
+        try {
+            String respuesta=restClient.seguimiento_gps(
+                    Integer.toString(jsonObject.getInt("user")),
+                    Double.toString(jsonObject.getDouble("latitude")),
+                    Double.toString(jsonObject.getDouble("longitude")),
+                    jsonObject.getString("fecha")
+                    );
+            Log.e("respuesta", respuesta);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
     }
     /**
      * Indica si se puede sincronizar por el medio que se le manda
@@ -218,8 +201,6 @@ reiniciarSincronizacion(usuario);
      * @param jsonObject objeto json que contiene la información a enviar
      */
     private void sincronizarPosicionActual(JSONObject jsonObject) {
-     //   Toast.makeText(context,"Iniciando sincronizacion posicion",Toast.LENGTH_SHORT).show();
-        RequestQueue requestQueue=Volley.newRequestQueue(context);
         String[] conexiones = usuario.getConexionesServidor().split("\\+");
         //String[] conexiones={"SMS"};
         if (conexiones.length == 1) {
@@ -227,14 +208,14 @@ reiniciarSincronizacion(usuario);
                 if (conexiones[0].trim().equals("SMS")) {
                    sincronizarPoscionViaSms(jsonObject,usuario.getNumero());
                 } else {
-                    sincronizarPosicionViaWeb(requestQueue, jsonObject,context);
+                    sincronizarPosicionViaWeb(jsonObject);
                 }
             }
         }
         if (conexiones.length == 2) {
             if (conexiones[0].trim().equals("3G") || conexiones[0].trim().equals("WIFI")) {
                 if (sePuedeSincronizarPorEsteMedio(conexiones[0])) {
-                    sincronizarPosicionViaWeb(requestQueue, jsonObject,context);
+                    sincronizarPosicionViaWeb(jsonObject);
                 } else {
                     if (sePuedeSincronizarPorEsteMedio(conexiones[1])) {
                         sincronizarPoscionViaSms(jsonObject, usuario.getNumero());
@@ -243,7 +224,7 @@ reiniciarSincronizacion(usuario);
             } else {
                 if (conexiones[1].trim().equals("3G") || conexiones[1].trim().equals("WIFI")) {
                     if (sePuedeSincronizarPorEsteMedio(conexiones[1])) {
-                        sincronizarPosicionViaWeb(requestQueue, jsonObject,context);
+                        sincronizarPosicionViaWeb(jsonObject);
                     }
                     else {
                         if (sePuedeSincronizarPorEsteMedio(conexiones[0])) {

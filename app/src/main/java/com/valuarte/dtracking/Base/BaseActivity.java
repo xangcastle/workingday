@@ -16,6 +16,7 @@ import com.valuarte.dtracking.BaseDatos.RecursosBaseDatos;
 import com.valuarte.dtracking.Historial;
 import com.valuarte.dtracking.Login;
 import com.valuarte.dtracking.MainActivity;
+import com.valuarte.dtracking.MainActivity_;
 import com.valuarte.dtracking.Mensajes;
 import com.valuarte.dtracking.R;
 import com.valuarte.dtracking.Util.Usuario;
@@ -140,7 +141,7 @@ public abstract class BaseActivity extends AppCompatActivity implements Serializ
                 confirmacion.show();
                 break;
             case R.id.nav_principal:
-                 i = new Intent(this, MainActivity.class);
+                 i = new Intent(this, MainActivity_.class);
                 startActivity(i);
                 break;
             case R.id.nav_historial:

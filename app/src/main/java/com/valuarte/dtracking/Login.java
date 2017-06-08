@@ -22,19 +22,22 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import com.android.volley.Request;
-import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.StringRequest;
-import com.android.volley.toolbox.Volley;
+
 import com.valuarte.dtracking.BaseDatos.RecursosBaseDatos;
 import com.valuarte.dtracking.Util.ConexionAInternet;
+import com.valuarte.dtracking.Util.MyRestErrorHandler;
+import com.valuarte.dtracking.Util.RestClient;
 import com.valuarte.dtracking.Util.SincronizadorBackground;
 import com.valuarte.dtracking.Util.SincronizadorGestionesEliminadas;
 import com.valuarte.dtracking.Util.SincronizadorPosicionActual;
 import com.valuarte.dtracking.Util.Usuario;
 
+import org.androidannotations.annotations.AfterViews;
+import org.androidannotations.annotations.Background;
+import org.androidannotations.annotations.Bean;
+import org.androidannotations.annotations.EActivity;
+import org.androidannotations.annotations.UiThread;
+import org.androidannotations.rest.spring.annotations.RestService;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -47,6 +50,7 @@ import java.util.Map;
  * Representa el activity para el login en la aplicacion
  * @version 1.0
  */
+@EActivity
 public class Login extends AppCompatActivity {
     /**
      * Boton que se presiona para entrar a la plicacion
@@ -73,10 +77,6 @@ public class Login extends AppCompatActivity {
      */
     private EditText password;
     /**
-     * Cola de peticiones al servidor
-     */
-    private RequestQueue requestQueue;
-    /**
      * Acceso a la base de datos
      */
     private RecursosBaseDatos recursosBaseDatos;
@@ -85,16 +85,29 @@ public class Login extends AppCompatActivity {
      */
     private ConexionAInternet conexionAInternet;
 
+
+    @RestService
+    RestClient restClient;
+    @Bean
+    MyRestErrorHandler myErrorhandler;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         try {
             super.onCreate(savedInstanceState);
             setContentView(R.layout.activity_login2);
             verificarPermisos(this);
+        }
+        catch (Exception e){}
+    }
+    @AfterViews
+    void cargarControles(){
+        try{
+            restClient.setRestErrorHandler(myErrorhandler);
             conexionAInternet = new ConexionAInternet();
             recursosBaseDatos = new RecursosBaseDatos(this);
             if (estaLogueado()) {
-                Intent i = new Intent(Login.this, MainActivity.class);
+                Intent i = new Intent(Login.this, MainActivity_.class);
                 i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                 startActivity(i);
             }
@@ -102,12 +115,9 @@ public class Login extends AppCompatActivity {
             entrar = (Button) findViewById(R.id.loguear);
             username = (EditText) findViewById(R.id.username);
             password = (EditText) findViewById(R.id.password);
-            requestQueue = Volley.newRequestQueue(this);
             asignarEventosABotones();
-        }
-        catch (Exception e){}
+        }catch (Exception e){}
     }
-
     /**
      * Actualiza los permisos para escribir en el almacenamiento externo del movil
      *
@@ -243,7 +253,7 @@ public class Login extends AppCompatActivity {
                         if (usuario.getNommbreUsuario().equals(user) && usuario.getContrasenia().equals(pass)) {
                             recursosBaseDatos.actualizarEstadoUsuario(usuario.LOGUEADO);
                             construirBackground(usuario);
-                            Intent i = new Intent(Login.this, MainActivity.class);
+                            Intent i = new Intent(Login.this, MainActivity_.class);
                             i.putExtra("inicioSesion", 1);
                             i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                             startActivity(i);
@@ -291,99 +301,77 @@ public class Login extends AppCompatActivity {
      * @param userName nombre de usuario
      * @param password contraseña
      */
-    private void solicitarLogin(final String userName, final String password) {
-        String url = "http://192.168.0.38:8000/dtracking/movil/login/";
-        /**
-         * solicitud post al servidor
-         */
-        StringRequest postRequest = new StringRequest(Request.Method.POST, url,
-                new Response.Listener<String>() {
-                    /**
-                     * obtiene la respuesta que envia el servior
-                     * @param response
-                     */
-                    @Override
-                    public void onResponse(String response) {
-                        // response
-                        cargaLogin.dismiss();
-                        try {
-                            //verificamos que si se haya podido loguear
-                            if (!response.trim().equals("")) {
-                                JSONArray jsonArray = new JSONArray(response);
-                                JSONObject jsonObject = jsonArray.getJSONObject(0);
-                                JSONObject jsonObject1;
-                                if (jsonObject.isNull("error")) {
-                                    int intervalo=Usuario.INTERVALOSINCRONIZACIONGPS;
-                                    recursosBaseDatos.eliminarUsuariosRegistrados();
-                                    jsonObject1 = jsonObject.getJSONObject("perfil");
-                                    if(!jsonObject1.isNull("intervalo"))
-                                    {
-
-                                        intervalo=jsonObject1.getInt("intervalo")*1000;
-                                        if(intervalo<60000)
-                                        {
-                                            intervalo=60000;
-                                        }
-                                    }
-
-                                    String numero="";
-                                    if(!jsonObject1.isNull("sms_gateway"))
-                                    {
-                                        numero=jsonObject1.getString("sms_gateway");
-                                    }
-                                    Usuario usuario = new Usuario(jsonObject.getInt("id"), jsonObject.getString("username"), jsonObject.getString("name")
-                                            , jsonObject1.getString("foto"), numero, password,
-                                            jsonObject1.getString("server_conection"), intervalo,Usuario.LOGUEADO);
-                                    recursosBaseDatos.guardarUsuario(usuario);
-                                    construirBackground(usuario);
-                                    Intent i = new Intent(Login.this, MainActivity.class);
-                                    i.putExtra("inicioSesion", 2);
-                                    i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                                    startActivity(i);
-                                } else {
-                                    construirError(jsonObject.getString("error"));
-                                }
-
-
-                            } else {
-                                construirError("Datos incorrectos");
-                            }
-
-                        } catch (JSONException e) {
-                            Log.e("Error", e.getMessage());
-                            e.printStackTrace();
-                        }
-                    }
-                },
-
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        cargaLogin.dismiss();
-                        errorLogin = new AlertDialog.Builder(Login.this);
-                        errorLogin.setTitle("Error");
-                        errorLogin.setMessage("Error con el servidor");
-                        errorLogin.setNeutralButton("Aceptar", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialogInterface, int i) {
-
-                            }
-                        });
-                        errorLogin.show();
-                    }
-                }
-        ) {
-            @Override
-            protected Map<String, String> getParams() {
-                Map<String, String> params = new HashMap<String, String>();
-                params.put("username", userName);
-                params.put("password", password);
-                return params;
-            }
-        };
-        requestQueue.add(postRequest);
+    @Background
+    void solicitarLogin(final String userName, final String password) {
+        String respuesta=restClient.login(userName,password);
+        solicitarLogin(respuesta,userName,password);
     }
+    @UiThread
+    void solicitarLogin(String respuesta, final String userName, final String password){
+        if(respuesta==null) {
+            cargaLogin.dismiss();
+            errorLogin = new AlertDialog.Builder(Login.this);
+            errorLogin.setTitle("Error");
+            errorLogin.setMessage("Error con el servidor");
+            errorLogin.setNeutralButton("Aceptar", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialogInterface, int i) {
 
+                }
+            });
+            errorLogin.show();
+        }else {
+            // response
+            cargaLogin.dismiss();
+            try {
+                //verificamos que si se haya podido loguear
+                if (!respuesta.trim().equals("")) {
+                    JSONArray jsonArray = new JSONArray(respuesta);
+                    JSONObject jsonObject = jsonArray.getJSONObject(0);
+                    JSONObject jsonObject1;
+                    if (jsonObject.isNull("error")) {
+                        int intervalo=Usuario.INTERVALOSINCRONIZACIONGPS;
+                        recursosBaseDatos.eliminarUsuariosRegistrados();
+                        jsonObject1 = jsonObject.getJSONObject("perfil");
+                        if(!jsonObject1.isNull("intervalo"))
+                        {
+
+                            intervalo=jsonObject1.getInt("intervalo")*1000;
+                            if(intervalo<60000)
+                            {
+                                intervalo=60000;
+                            }
+                        }
+
+                        String numero="";
+                        if(!jsonObject1.isNull("sms_gateway"))
+                        {
+                            numero=jsonObject1.getString("sms_gateway");
+                        }
+                        Usuario usuario = new Usuario(jsonObject.getInt("id"), jsonObject.getString("username"), jsonObject.getString("name")
+                                , jsonObject1.getString("foto"), numero, password,
+                                jsonObject1.getString("server_conection"), intervalo,Usuario.LOGUEADO);
+                        recursosBaseDatos.guardarUsuario(usuario);
+                        construirBackground(usuario);
+                        Intent i = new Intent(Login.this, MainActivity_.class);
+                        i.putExtra("inicioSesion", 2);
+                        i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                        startActivity(i);
+                    } else {
+                        construirError(jsonObject.getString("error"));
+                    }
+
+
+                } else {
+                    construirError("Datos incorrectos");
+                }
+
+            } catch (JSONException e) {
+                Log.e("Error", e.getMessage());
+                e.printStackTrace();
+            }
+        }
+    }
     /**
      * Construye las alarmas para la sincronizacion en background
      */

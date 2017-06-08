@@ -3,34 +3,40 @@ package com.valuarte.dtracking.MensajeTextos;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.telephony.SmsMessage;
 import android.util.Log;
 
-import com.android.volley.Request;
-import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.StringRequest;
-import com.android.volley.toolbox.Volley;
+
 import com.valuarte.dtracking.BaseDatos.RecursosBaseDatos;
 import com.valuarte.dtracking.ElementosGraficos.Gestion;
 import com.valuarte.dtracking.Util.ConexionAInternet;
 import com.valuarte.dtracking.Util.ContenidoMensaje;
 import com.valuarte.dtracking.Util.EncodingJSON;
+import com.valuarte.dtracking.Util.MyRestErrorHandler;
+import com.valuarte.dtracking.Util.RestClient;
 import com.valuarte.dtracking.Util.SincronizacionGestionWeb;
 import com.valuarte.dtracking.Util.SincronizadorGestionesEliminadas;
 import com.valuarte.dtracking.Util.SincronizadorPosicionActual;
 
+import org.androidannotations.annotations.Background;
+import org.androidannotations.annotations.Bean;
+import org.androidannotations.annotations.EBean;
+import org.androidannotations.rest.spring.annotations.RestService;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
-
+@EBean
 public class SmsListener extends BroadcastReceiver {
 
+    @RestService
+    RestClient restClient;
+    @Bean
+    MyRestErrorHandler myErrorhandler;
 
     @Override
     public void onReceive(Context context, Intent intent) {
@@ -48,7 +54,11 @@ public class SmsListener extends BroadcastReceiver {
                     String msgBody = "";
                     for (int i = 0; i < msgs.length; i++) {
                         String format = bundle.getString("format");
-                        msgs[i] = SmsMessage.createFromPdu((byte[]) pdus[i], format);
+                        //TODO: hay que ver que pssa con otras versiones de android
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                            msgs[i] = SmsMessage.createFromPdu((byte[]) pdus[i], format);
+                        }
+
                         msg_from = msgs[i].getOriginatingAddress();
                         msgBody = msgBody + msgs[i].getMessageBody();
                     }
@@ -68,7 +78,7 @@ public class SmsListener extends BroadcastReceiver {
                         jsonObject = decodificarMensajePosicion(msgBody);
                         if (jsonObject != null) {
                             if (conexionAInternet.estaConectado(context)) {
-                                SincronizadorPosicionActual.sincronizarPosicionViaWeb(Volley.newRequestQueue(context), jsonObject,context);
+                               new SincronizadorPosicionActual().sincronizarPosicionViaWeb(jsonObject);
                             }
                         } else {
                             jsonObject = decodificarMensajeContenidoMensaje(msgBody);
@@ -178,53 +188,34 @@ public class SmsListener extends BroadcastReceiver {
      *
      * @param sms el objeto sms que se va a enviar
      */
+    @Background
     public void enviarCuerpoFormularioAServidor(final Sms sms, Context context, final RecursosBaseDatos recursosBaseDatos) {
         final JSONObject jsonObject = sms.getJsonObject();
-        /**
-         * solicitud post al servidor
-         */
-        StringRequest postRequest = new StringRequest(Request.Method.POST, SincronizacionGestionWeb.URL,
-                new Response.Listener<String>() {
-                    /**
-                     * obtiene la respuesta que envia el servior
-                     *
-                     * @param response
-                     */
-                    @Override
-                    public void onResponse(String response) {
-                        recursosBaseDatos.actualizarEstadoSMS(sms.getId(), true);
-                    }
-                },
+        Log.e("json",jsonObject.toString());
+        String json;
+        try {
+            json= jsonObject.getJSONObject("campos").toString();
+            json=json.replace("\"","&");
+            json=json.replace("&","'");
 
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        recursosBaseDatos.actualizarEstadoSMS(sms.getId(), false);
-                    }
-                }
-        ) {
-            @Override
-            protected Map<String, String> getParams() {
-                Map<String, String> params = new HashMap<String, String>();
-                try {
-                    params.put("gestion", Integer.toString(jsonObject.getInt("gestion")));
-
-                    params.put("latitude", Double.toString(jsonObject.getDouble("latitud")));
-                    params.put("longitude", Double.toString(jsonObject.getDouble("longitud")));
-                    params.put("fecha", jsonObject.getString("fecha"));
-                    String json = jsonObject.getJSONObject("campos").toString();
-                    json = json.replace("\"", "&");
-                    json = json.replace("&", "'");
-                    params.put("json", json);
-
-                    params.put("user", Integer.toString(jsonObject.getInt("usuario")));
-                } catch (JSONException e) {
-                    params = new HashMap<>();
-                }
-                return params;
+            String respuesta=restClient.cargar_gestion(
+                    Integer.toString(jsonObject.getInt("gestion")),
+                    Double.toString(jsonObject.getDouble("latitud")),
+                    Double.toString(jsonObject.getDouble("longitud")),
+                    jsonObject.getString("fecha"),
+                    json,
+                    Integer.toString(jsonObject.getInt("usuario"))
+            );
+            if(respuesta!=null){
+                Log.e("responseee", respuesta);
+                recursosBaseDatos.actualizarEstadoSMS(sms.getId(), true);
+            }else {
+                Log.e("error", "error");
+                recursosBaseDatos.actualizarEstadoSMS(sms.getId(), false);
             }
-        };
-        RequestQueue requestQueue = Volley.newRequestQueue(context);
-        requestQueue.add(postRequest);
+        } catch (JSONException e) {
+        }
+
+
     }
 }

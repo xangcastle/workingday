@@ -31,7 +31,7 @@
         </receiver>
 
         <activity
-            android:name="com.valuarte.dtracking.MainActivity"
+            android:name="com.valuarte.dtracking.MainActivity_"
             android:label="@string/title_activity" >
         </activity>
         <activity
@@ -48,7 +48,7 @@
         <receiver android:name="com.valuarte.dtracking.Util.SincronizadorGestionesEliminadas" />
 
         <activity
-            android:name="com.valuarte.dtracking.Login"
+            android:name="com.valuarte.dtracking.Login_"
             android:label="@string/title_activity" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

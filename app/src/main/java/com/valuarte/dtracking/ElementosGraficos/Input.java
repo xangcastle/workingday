@@ -4,6 +4,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.support.design.widget.TextInputLayout;
 import android.text.InputFilter;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.EditText;
 
@@ -67,25 +68,24 @@ public class Input extends Vista{
      */
     @Override
     public View construirVista(Context context) {
+        LayoutInflater inflater = LayoutInflater.from(context);
+        View inflatedLayout= inflater.inflate(R.layout.input_layout, null, false);
 
-        TextInputLayout textInputLayout=new TextInputLayout(context);
-        EditText editText=new EditText(context);
+
+        EditText editText=(EditText) inflatedLayout.findViewById(R.id.entrada);
         editText.setText(valor);
         editText.setId(idPantalla);
         editText.setEnabled(habilitado);
         editText.setHint(titulo);
         editText.setInputType(tipoEntrada);
         editText.setSingleLine(true);
-        editText.setBackgroundResource(R.drawable.background_edittext);
+        //editText.setBackgroundResource(R.drawable.background_edittext);
         InputFilter[] FilterArray = new InputFilter[1];
         FilterArray[0] = new InputFilter.LengthFilter(longitudMaxima);
         editText.setFilters(FilterArray);
         editText.setFocusableInTouchMode(true);
         this.view=editText;
-        TextInputLayout.LayoutParams l=new TextInputLayout.LayoutParams(ancho, alto);
-        l.setMargins(10,30,10,10);
-        textInputLayout.addView(editText, l);
-        return textInputLayout;
+        return inflatedLayout;
     }
 
     /**

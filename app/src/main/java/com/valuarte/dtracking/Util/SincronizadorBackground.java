@@ -244,8 +244,11 @@ public class SincronizadorBackground extends BroadcastReceiver implements Mensaj
      * @param jsonObject objeto json que contiene la infromacion para enviar via sms
      */
     private void sincronizarViaIntenet(JSONObject jsonObject, Gestion gestion) {
-        SincronizacionGestionWeb sincronizacionGestionWeb = new SincronizacionGestionWeb(
-                context, gestion, jsonObject, this, usuario.getId());
+        SincronizacionGestionWeb sincronizacionGestionWeb = new SincronizacionGestionWeb();
+        sincronizacionGestionWeb.gestion=gestion;
+        sincronizacionGestionWeb.jsonObject=jsonObject;
+        sincronizacionGestionWeb.listenerSincronizacionWeb=this;
+        sincronizacionGestionWeb.idUser=usuario.getId();
         sincronizacionGestionWeb.sincronizar();
     }
 

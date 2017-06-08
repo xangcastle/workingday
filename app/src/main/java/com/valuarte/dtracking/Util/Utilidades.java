@@ -19,6 +19,9 @@ import java.io.IOException;
 public  class Utilidades {
     private static final float maxHeight = 580.0f;
     private static final float maxWidth = 580.0f;
+    //public static final String URL_HOST = "http://192.168.0.38:8000";
+    public static final String URL_HOST = "http://www.valuarte.com.ni";
+
     public static boolean savecompressImage(String imagePath){
         try {
             byte[] imagencompress= compressImage(imagePath);

@@ -515,8 +515,12 @@ public class FormularioActivity extends AppCompatActivity implements Imagen.List
         cargaSMS.setCancelable(false);
         cargaSMS.setProgressStyle(ProgressDialog.STYLE_SPINNER);
         cargaSMS.show();
-        SincronizacionGestionWeb sincronizacionGestionWeb = new SincronizacionGestionWeb(
-                FormularioActivity.this, gestion, jsonObject, FormularioActivity.this, usuario.getId());
+
+        SincronizacionGestionWeb sincronizacionGestionWeb = new SincronizacionGestionWeb();
+        sincronizacionGestionWeb.gestion=gestion;
+        sincronizacionGestionWeb.jsonObject=jsonObject;
+        sincronizacionGestionWeb.idUser= usuario.getId();
+        sincronizacionGestionWeb.listenerSincronizacionWeb=this;
         sincronizacionGestionWeb.sincronizar();
     }
 
@@ -898,11 +902,50 @@ public class FormularioActivity extends AppCompatActivity implements Imagen.List
     private void enGaleriaResult(Intent data) {
         if (data != null) {
             String path = getRealPathFromURI(this, data.getData());
-            ImageView imageView = (ImageView) findViewById(idImage);
-            Bitmap bitmap = BitmapFactory.decodeFile(path);
-            if (bitmap != null) {
-                imageView.setImageBitmap(Bitmap.createScaledBitmap(bitmap, imageView.getWidth(), imageView.getHeight(), false));
-                rutas.put(idImage, path);
+            if (findViewById(idImage) instanceof ImageView) {
+                ImageView imageView = (ImageView) findViewById(idImage);
+                Bitmap bitmap = BitmapFactory.decodeFile(path);
+                if (bitmap != null) {
+                    imageView.setImageBitmap(Bitmap.createScaledBitmap(bitmap, imageView.getWidth(), imageView.getHeight(), false));
+                    rutas.put(idImage, path);
+                }
+            }else {
+                LinearLayout layoutImagenes = (LinearLayout) findViewById(idImage);
+                LayoutInflater inflater = LayoutInflater.from(this);
+                View ImageLayout = inflater.inflate(R.layout.item_image_grid, null, false);
+
+                Button borrar = (Button) ImageLayout.findViewById(R.id.borrarimagen);
+
+                borrar.setTag(idImage + ";" + layoutImagenes.getChildCount());
+                borrar.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        borrarImagen(view);
+                    }
+                });
+
+
+
+                try {
+                    String Imagenes = rutasMulti.get(idImage);
+                    JSONArray arregloImagenes = new JSONArray();
+                    if (Imagenes != null)
+                        arregloImagenes = new JSONArray(Imagenes);
+
+                    arregloImagenes.put(path);
+                    rutasMulti.put(idImage, arregloImagenes.toString());
+
+                    ImageView image = (ImageView) ImageLayout.findViewById(R.id.image);
+                    Bitmap bitmap = BitmapFactory.decodeFile(path);
+                    if(bitmap!=null){
+                        image.setImageBitmap(Bitmap.createScaledBitmap(bitmap, 200, 200, false));
+                    }
+
+                    layoutImagenes.addView(ImageLayout);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
             }
 
         }

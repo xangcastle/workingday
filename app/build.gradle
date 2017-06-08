@@ -1,13 +1,32 @@
 apply plugin: 'com.android.application'
-
+apply plugin: 'android-apt'
+buildscript {
+    repositories {
+        mavenCentral()
+        jcenter()
+    }
+    dependencies {
+        // replace with the current version of the Android plugin
+        classpath 'com.android.tools.build:gradle:2.3.1'
+        // replace with the current version of the android-apt plugin
+        classpath 'com.neenbedankt.gradle.plugins:android-apt:1.8'
+    }
+}
+repositories {
+    mavenCentral()
+    mavenLocal()
+    maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
+    maven { url "https://jitpack.io" }
+    maven { url "https://raw.github.com/embarkmobile/zxing-android-minimal/mvn-repo/maven-repository/" }
+}
 android {
-    compileSdkVersion 23
-    buildToolsVersion '25.0.0'
+    compileSdkVersion 25
+    buildToolsVersion '25.0.2'
 
     defaultConfig {
-        applicationId "com.valuarte"
+        applicationId "com.valuarte.dtracking"
         minSdkVersion 16
-        targetSdkVersion 23
+        targetSdkVersion 25
         versionCode 1
         versionName "1.0"
     }
@@ -21,13 +40,19 @@ android {
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
-    compile 'com.android.support:appcompat-v7:23.1.1'
-    compile "com.android.support:design:${android_support_lib_version}"
-    compile "com.android.support:cardview-v7:${android_support_lib_version}"
-    compile 'com.mcxiaoke.volley:library:1.0.+'
-    compile 'com.github.bumptech.glide:glide:3.6.1'
+    compile 'com.android.support:appcompat-v7:25.3.1'
+    compile "com.android.support:design:25.3.1"
+    compile "com.android.support:cardview-v7:25.3.1"
+    compile 'com.github.bumptech.glide:glide:3.7.0'
     compile 'com.jakewharton:butterknife:7.0.1'
     compile 'me.dm7.barcodescanner:zbar:1.8.2'
 
     compile 'com.android.support.constraint:constraint-layout:1.0.2'
+    compile 'com.google.code.gson:gson:2.7'
+
+    compile 'org.androidannotations:androidannotations-api:4.0-SNAPSHOT'
+    compile 'org.androidannotations:rest-spring-api:4.0-SNAPSHOT'
+    apt 'org.androidannotations:androidannotations:4.0-SNAPSHOT'
+    apt 'org.androidannotations:rest-spring:4.0-SNAPSHOT'
+    compile 'org.springframework.android:spring-android-rest-template:2.0.0.M1'
 }

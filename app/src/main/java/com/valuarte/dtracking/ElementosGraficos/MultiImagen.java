@@ -103,41 +103,6 @@ public class MultiImagen extends Vista {
             }
         });
         return inflatedLayout;
-        /*
-
-        LinearLayout linearLayout = new LinearLayout(context);
-        linearLayout.setOrientation(LinearLayout.VERTICAL);
-        listener = (ListenerBotonImagen) context;
-        ImageView imageView = new ImageView(context);
-        imageView.setId(idPantalla);
-        FloatingActionButton floatingActionButton = new FloatingActionButton(context);
-        floatingActionButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                listener.onClickSeleccionado(idPantalla);
-            }
-        });
-        this.view = imageView;
-
-        TextView textView=new TextView(context);
-        textView.setText(getTitulo());
-        imageView.setFocusable(true);
-        imageView.setFocusableInTouchMode(true);
-        linearLayout.addView(textView, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT));
-        floatingActionButton.setImageResource(R.drawable.ic_image_area);
-        linearLayout.addView(imageView, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay().getHeight() / 3));
-        if(valor!=null)
-        {
-            if(!valor.equals(""))
-            {
-                Bitmap bitmap = BitmapFactory.decodeFile(valor);
-                if(bitmap!=null) {
-                    imageView.setImageBitmap(Bitmap.createScaledBitmap(bitmap, ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay().getWidth(), ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay().getHeight() / 3, false));
-                }
-                }
-        }
-        linearLayout.addView(floatingActionButton, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT));
-        return linearLayout;*/
     }
     private void galeriaIntent(Context context) {
         Intent intent = new Intent();

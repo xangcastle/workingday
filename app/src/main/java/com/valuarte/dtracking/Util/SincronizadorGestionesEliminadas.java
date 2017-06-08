@@ -11,12 +11,7 @@ import android.content.IntentFilter;
 import android.os.Build;
 import android.util.Log;
 
-import com.android.volley.Request;
-import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.StringRequest;
-import com.android.volley.toolbox.Volley;
+
 import com.valuarte.dtracking.BaseDatos.RecursosBaseDatos;
 import com.valuarte.dtracking.ElementosGraficos.Gestion;
 import com.valuarte.dtracking.FormularioActivity;
@@ -25,6 +20,10 @@ import com.valuarte.dtracking.MensajeTextos.MensajeEnviadoIntent;
 import com.valuarte.dtracking.Mensajes;
 import com.valuarte.dtracking.R;
 
+import org.androidannotations.annotations.Bean;
+import org.androidannotations.annotations.EBean;
+import org.androidannotations.annotations.UiThread;
+import org.androidannotations.rest.spring.annotations.RestService;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -39,6 +38,7 @@ import java.util.Map;
  *
  * @version 1.0
  */
+@EBean
 public class SincronizadorGestionesEliminadas extends BroadcastReceiver implements MensajeEnviadoIntent.ListenerMensajeEnviado {
     /**
      * Contexto de la aplicacion
@@ -48,10 +48,6 @@ public class SincronizadorGestionesEliminadas extends BroadcastReceiver implemen
      * Acceso a la base de datos
      */
     private RecursosBaseDatos recursosBaseDatos;
-    /**
-     * Cola de peticiones al servicio web
-     */
-    private RequestQueue requestQueue;
     /**
      * Los mensajes que se van a enviar
      */
@@ -65,13 +61,17 @@ public class SincronizadorGestionesEliminadas extends BroadcastReceiver implemen
      */
     private MensajeEnviadoIntent mensajeEnviadoIntent;
 
+    @RestService
+    RestClient restClient;
+    @Bean
+    MyRestErrorHandler myErrorhandler;
+
     @Override
     public void onReceive(Context context, Intent intent) {
         indiceSms=0;
         if (this.context == null) {
             this.context = context;
             recursosBaseDatos = new RecursosBaseDatos(this.context);
-            requestQueue = Volley.newRequestQueue(this.context);
             ArrayList<ContenidoMensaje> c=recursosBaseDatos.getContenidoMensajes();
             getGestionesEliminadas();
             resetearReceiverSMS();
@@ -96,79 +96,53 @@ public class SincronizadorGestionesEliminadas extends BroadcastReceiver implemen
     }
 
     private void getGestionesEliminadas() {
-        String url = "http://www.deltacopiers.com/dtracking/movil/mensajeria/";
-        /**
-         * solicitud post al servidor
-         */
-        StringRequest postRequest = new StringRequest(Request.Method.POST, url,
-                new Response.Listener<String>() {
-                    /**
-                     * obtiene la respuesta que envia el servior
-                     *
-                     * @param response
-                     */
-                    @Override
-                    public void onResponse(String response) {
-                        Log.e("respuesta", response);
-                        if (!response.equals("[]")) {
-                            JSONArray jsonArray = null;
-                            try {
-                                jsonArray = new JSONArray(response);
-                                JSONObject jsonObject = jsonArray.getJSONObject(0);
-                                jsonArray = jsonObject.getJSONArray("gestiones_eliminadas");
-                                jsonArray = jsonArray.getJSONArray(0);
-                                String arreglo=jsonArray.toString();
-                                arreglo=arreglo.replace('[','(');
-                                arreglo=arreglo.replace(']',')');
-                                int cantidad=recursosBaseDatos.getCantidadOcurrenciasGestiones(arreglo);
-                                int estado=ContenidoMensaje.SINENVIAR;
-                                if(cantidad==0)
-                                {
-                                    estado=ContenidoMensaje.SOLOENVIAR;
-                                }
-                                else
-                                {
-                                    recursosBaseDatos.eliminarGestiones(arreglo);
-                                    construirNotificacion(context, jsonObject.getString("mensaje_gps"));
-                                    if(cantidad==jsonArray.length())
-                                    {
-                                        estado=ContenidoMensaje.RECIBIDO;
-                                    }
-                                }
-                                ContenidoMensaje contenidoMensaje = new ContenidoMensaje(
-                                        jsonObject.getString("mensaje_gps"), jsonArray, estado,
-                                        jsonObject.getString("numero"), Gestion.generarFechaDesdeCalendar(Calendar.getInstance()), jsonObject.getString("codUsuario"));
-                                recursosBaseDatos.guardarContenidoMensaje(contenidoMensaje);
-
-                            } catch (JSONException e) {
-                                Log.e("error", e.getMessage());
-                            }
-
+        String respuesta=restClient.mensajeria();
+        if(respuesta!=null){
+            Log.e("respuesta", respuesta);
+            if (!respuesta.equals("[]")) {
+                JSONArray jsonArray = null;
+                try {
+                    jsonArray = new JSONArray(respuesta);
+                    JSONObject jsonObject = jsonArray.getJSONObject(0);
+                    jsonArray = jsonObject.getJSONArray("gestiones_eliminadas");
+                    jsonArray = jsonArray.getJSONArray(0);
+                    String arreglo=jsonArray.toString();
+                    arreglo=arreglo.replace('[','(');
+                    arreglo=arreglo.replace(']',')');
+                    int cantidad=recursosBaseDatos.getCantidadOcurrenciasGestiones(arreglo);
+                    int estado=ContenidoMensaje.SINENVIAR;
+                    if(cantidad==0)
+                    {
+                        estado=ContenidoMensaje.SOLOENVIAR;
+                    }
+                    else
+                    {
+                        recursosBaseDatos.eliminarGestiones(arreglo);
+                        construirNotificacion(context, jsonObject.getString("mensaje_gps"));
+                        if(cantidad==jsonArray.length())
+                        {
+                            estado=ContenidoMensaje.RECIBIDO;
                         }
-                        enviarContenidos();
                     }
-                },
+                    ContenidoMensaje contenidoMensaje = new ContenidoMensaje(
+                            jsonObject.getString("mensaje_gps"), jsonArray, estado,
+                            jsonObject.getString("numero"), Gestion.generarFechaDesdeCalendar(Calendar.getInstance()), jsonObject.getString("codUsuario"));
+                    recursosBaseDatos.guardarContenidoMensaje(contenidoMensaje);
 
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        Log.e("error", "error");
-                    }
+                } catch (JSONException e) {
+                    Log.e("error", e.getMessage());
                 }
-        ) {
-            @Override
-            protected Map<String, String> getParams() {
-                Map<String, String> params = new HashMap<String, String>();
-                return params;
+
             }
-        };
-        requestQueue.add(postRequest);
+            enviarContenidos();
+        }
     }
 
     /**
      * Envia los contenidos de mensaje que estan sin enviar
      */
-    private void enviarContenidos() {
+    @UiThread
+    void enviarContenidos() {
         contenidoMensajes = recursosBaseDatos.getContenidoMensajePorEstado("("+ContenidoMensaje.SINENVIAR+","+ContenidoMensaje.SOLOENVIAR+")");
         Log.e("contenidos",Integer.toString(contenidoMensajes.size()));
         Intent intent = new Intent(FormularioActivity.SENT);
