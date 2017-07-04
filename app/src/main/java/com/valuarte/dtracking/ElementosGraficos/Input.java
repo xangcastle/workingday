@@ -73,10 +73,12 @@ public class Input extends Vista{
 
 
         EditText editText=(EditText) inflatedLayout.findViewById(R.id.entrada);
+        TextInputLayout v = (TextInputLayout) inflatedLayout.findViewById(R.id.input_entrada_layout);
+        v.setHint(titulo);
         editText.setText(valor);
         editText.setId(idPantalla);
         editText.setEnabled(habilitado);
-        editText.setHint(titulo);
+        //editText.setHint(titulo);
         editText.setInputType(tipoEntrada);
         editText.setSingleLine(true);
         //editText.setBackgroundResource(R.drawable.background_edittext);

@@ -58,7 +58,7 @@ public class Contenedor extends Vista{
             linearLayout.addView(vista.construirVista(context),new ViewGroup.LayoutParams(vista.getAncho(),vista.getAlto()));
         }
         this.view=linearLayout;
-    return linearLayout;
+        return linearLayout;
     }
 
     /**

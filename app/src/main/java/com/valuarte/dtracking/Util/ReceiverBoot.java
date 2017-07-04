@@ -41,11 +41,11 @@ public class ReceiverBoot extends BroadcastReceiver {
                 pendingIntent = PendingIntent.getBroadcast(context, 0, alarmIntent, 0);
                 manager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
                 manager.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis(), usuario.getIntervaloSincroinizacionGPS(), pendingIntent);
-                alarmIntent = new Intent(context, SincronizadorGestionesEliminadas.class);
+                alarmIntent = new Intent(context, SincronizadorGestionesEliminadas_.class);
                 pendingIntent = PendingIntent.getBroadcast(context, 0, alarmIntent, 0);
                 manager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
                 manager.cancel(pendingIntent);
-                alarmIntent = new Intent(context, SincronizadorGestionesEliminadas.class);
+                alarmIntent = new Intent(context, SincronizadorGestionesEliminadas_.class);
                 pendingIntent = PendingIntent.getBroadcast(context, 0, alarmIntent, 0);
                 manager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
                 manager.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis(), MainActivity.INTERVALOGESTIONESELIMINADAS, pendingIntent);
@@ -66,11 +66,11 @@ public class ReceiverBoot extends BroadcastReceiver {
                 pendingIntent = PendingIntent.getBroadcast(context, 0, alarmIntent, 0);
                 manager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
                 manager.setExact(AlarmManager.RTC_WAKEUP, System.currentTimeMillis(),pendingIntent);
-                alarmIntent = new Intent(context, SincronizadorGestionesEliminadas.class);
+                alarmIntent = new Intent(context, SincronizadorGestionesEliminadas_.class);
                 pendingIntent = PendingIntent.getBroadcast(context, 0, alarmIntent, 0);
                 manager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
                 manager.cancel(pendingIntent);
-                alarmIntent = new Intent(context, SincronizadorGestionesEliminadas.class);
+                alarmIntent = new Intent(context, SincronizadorGestionesEliminadas_.class);
                 pendingIntent = PendingIntent.getBroadcast(context, 0, alarmIntent, 0);
                 manager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
                 manager.setExact(AlarmManager.RTC_WAKEUP, System.currentTimeMillis(), pendingIntent);

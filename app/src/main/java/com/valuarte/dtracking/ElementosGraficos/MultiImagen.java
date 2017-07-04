@@ -132,7 +132,7 @@ public class MultiImagen extends Vista {
      */
     @Override
     public Object getValor() throws NoSoportaValorException,ValorRequeridoException {
-        boolean encontrado=true;
+       boolean encontrado=true;
        if(requerido)
        {
            if(valor.trim().equals(""))

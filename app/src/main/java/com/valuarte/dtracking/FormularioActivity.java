@@ -93,7 +93,8 @@ import butterknife.ButterKnife;
  * Representa el activity que carga el formulario que va a llenar el usuario
  * @version 1.0
  */
-public class FormularioActivity extends AppCompatActivity implements Imagen.ListenerBotonImagen,
+public class FormularioActivity extends AppCompatActivity
+        implements Imagen.ListenerBotonImagen,
         MultiImagen.ListenerBotonImagen,
         FirmaDigital.EventoBotonFirma, MensajeEnviadoIntent.ListenerMensajeEnviado,
         SincronizacionGestionWeb.ListenerSincronizacionWeb, LocationListener {
@@ -264,6 +265,7 @@ public class FormularioActivity extends AppCompatActivity implements Imagen.List
             tipoGestion = (TipoGestion) intent.getSerializableExtra("tipoGestion");
             formulario = gestion.getFormulario();
             setTitle(formulario.getName());
+
             LinearLayout linearLayout = (LinearLayout) findViewById(R.id.principal);
             for (Contenedor c : formulario.getContenedores()) {
                 LinearLayout.LayoutParams l = new LinearLayout.LayoutParams(c.getAncho(), c.getAlto());

@@ -29,6 +29,7 @@ import com.valuarte.dtracking.Util.MyRestErrorHandler;
 import com.valuarte.dtracking.Util.RestClient;
 import com.valuarte.dtracking.Util.SincronizadorBackground;
 import com.valuarte.dtracking.Util.SincronizadorGestionesEliminadas;
+import com.valuarte.dtracking.Util.SincronizadorGestionesEliminadas_;
 import com.valuarte.dtracking.Util.SincronizadorPosicionActual;
 import com.valuarte.dtracking.Util.Usuario;
 
@@ -421,11 +422,11 @@ public class Login extends AppCompatActivity {
             pendingIntent = PendingIntent.getBroadcast(this, 0, alarmIntent, 0);
             manager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
             manager.setExact(AlarmManager.RTC_WAKEUP, System.currentTimeMillis(), pendingIntent);
-            alarmIntent = new Intent(this, SincronizadorGestionesEliminadas.class);
+            alarmIntent = new Intent(this, SincronizadorGestionesEliminadas_.class);
             pendingIntent = PendingIntent.getBroadcast(this, 0, alarmIntent, 0);
             manager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
             manager.cancel(pendingIntent);
-            alarmIntent = new Intent(this, SincronizadorGestionesEliminadas.class);
+            alarmIntent = new Intent(this, SincronizadorGestionesEliminadas_.class);
             pendingIntent = PendingIntent.getBroadcast(this, 0, alarmIntent, 0);
             manager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
             manager.setExact(AlarmManager.RTC_WAKEUP, System.currentTimeMillis(), pendingIntent);

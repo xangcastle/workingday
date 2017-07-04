@@ -64,7 +64,7 @@
                 android:background="@color/ColorPrimary">
 
 
-            <ListView
+                <ListView
                 android:id="@+id/listaTipoGetsiones"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
@@ -89,7 +89,7 @@
                     </TextView>
 
                 </LinearLayout>
-</LinearLayout>
+            </LinearLayout>
 
         </android.support.v4.widget.NestedScrollView>
 

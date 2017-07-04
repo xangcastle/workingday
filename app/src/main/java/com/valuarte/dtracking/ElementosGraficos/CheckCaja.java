@@ -2,13 +2,18 @@ package com.valuarte.dtracking.ElementosGraficos;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.support.design.widget.TextInputLayout;
+import android.text.InputFilter;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.CheckBox;
+import android.widget.EditText;
 
 import com.valuarte.dtracking.BaseDatos.RecursosBaseDatos;
 import com.valuarte.dtracking.Excepciones.NoSoportaValorException;
 import com.valuarte.dtracking.Excepciones.ValorRequeridoException;
 import com.valuarte.dtracking.FormularioActivity;
+import com.valuarte.dtracking.R;
 
 /**
  * Representa un check box del formulario
@@ -53,13 +58,15 @@ public class CheckCaja extends Vista{
      */
     @Override
     public View construirVista(Context context) {
-        FormularioActivity formularioActivity=(FormularioActivity)context;
-        CheckBox checkBox=new CheckBox(context);
+        LayoutInflater inflater = LayoutInflater.from(context);
+        View inflatedLayout= inflater.inflate(R.layout.checkbox_layout, null, false);
+
+        CheckBox checkBox=(CheckBox) inflatedLayout.findViewById(R.id.entrada);
         checkBox.setText(titulo);
         checkBox.setChecked(valor);
         checkBox.setId(idPantalla);
         this.view=checkBox;
-        return checkBox;
+        return inflatedLayout;
     }
 
     /**

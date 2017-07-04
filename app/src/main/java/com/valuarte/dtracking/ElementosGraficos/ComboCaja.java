@@ -3,14 +3,18 @@ package com.valuarte.dtracking.ElementosGraficos;
 import android.content.ContentValues;
 import android.content.Context;
 import android.support.design.widget.TextInputLayout;
+import android.text.InputFilter;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ArrayAdapter;
+import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TextView;
 
 import com.valuarte.dtracking.BaseDatos.RecursosBaseDatos;
 import com.valuarte.dtracking.Excepciones.NoSoportaValorException;
 import com.valuarte.dtracking.Excepciones.ValorRequeridoException;
+import com.valuarte.dtracking.R;
 
 import java.util.ArrayList;
 
@@ -59,7 +63,11 @@ public class ComboCaja extends Vista {
      */
     @Override
     public View construirVista(Context context) {
-        Spinner spinner = new Spinner(context);
+        LayoutInflater inflater = LayoutInflater.from(context);
+        View inflatedLayout= inflater.inflate(R.layout.combobox_layout, null, false);
+
+
+        Spinner spinner=(Spinner) inflatedLayout.findViewById(R.id.entrada);
         spinner.setId(idPantalla);
         spinner.setAdapter(new ArrayAdapter<ElementoCombo>(context, android.R.layout.simple_spinner_dropdown_item, getElementoCombos()));
         spinner.setEnabled(habilitado);
@@ -78,13 +86,13 @@ public class ComboCaja extends Vista {
                 getElementoCombos().get(0).setSeleccionado(true);
             }
         }
-        TextView textView = new TextView(context);
+        spinner.setPrompt(titulo);
+        TextView textView =(TextView) inflatedLayout.findViewById(R.id.titulo);
         textView.setText(titulo);
-        TextInputLayout textInputLayout = new TextInputLayout(context);
-        textInputLayout.addView(textView, new TextInputLayout.LayoutParams(TextInputLayout.LayoutParams.MATCH_PARENT, TextInputLayout.LayoutParams.WRAP_CONTENT));
-        textInputLayout.addView(spinner, new Spinner.LayoutParams(TextInputLayout.LayoutParams.MATCH_PARENT, Spinner.LayoutParams.WRAP_CONTENT));
+
         this.view = spinner;
-        return textInputLayout;
+        return inflatedLayout;
+
     }
 
     /**
